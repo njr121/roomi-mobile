@@ -1,5 +1,5 @@
-# 기획 문서
-prd/
+# 기획 문서 및 로그 (루트 docs만 제외)
+docs/
 
 # 환경변수
 .env
@@ -15,3 +15,7 @@ dist/
 
 # 시스템 파일
 .DS_Store
+
+# Claude Code 개인 설정
+CLAUDE.local.md
+.claude/settings.local.json
