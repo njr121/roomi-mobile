@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "deny": [
+      "Write(.env*)",
+      "Write(prisma/migrations/*)",
+      "Write(**/node_modules/**)"
+    ]
+  }
+}
