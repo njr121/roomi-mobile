@@ -126,8 +126,9 @@
 - `6bea79c` — `docs(common): 문서 작성 규칙, 코드 사이클, 4-provider 인증 확장`
 - `6bfcb86` — `docs(logs): 260612 하네스 정비 및 문서 정합성 수정 기록`
 
+- [x] `git push origin feat/api` — `0d426d8..ca90516` push 완료
+
 ### 다음 할 것
 
-1. `git push origin feat/api`
-2. PR #2 생성 — `feat/api → develop` 머지
-3. Phase 3 시작 — `roomi-api/docs/features/phase3-auth.md` 확인 후 Auth 구현
+1. PR #2 생성 — `feat/api → develop` 머지
+2. Phase 3 시작 — `roomi-api/docs/features/phase3-auth.md` 확인 후 Auth 구현
