@@ -126,8 +126,73 @@
 - `6bea79c` — `docs(common): 문서 작성 규칙, 코드 사이클, 4-provider 인증 확장`
 - `6bfcb86` — `docs(logs): 260612 하네스 정비 및 문서 정합성 수정 기록`
 
+- [x] `git push origin feat/api` — `0d426d8..ca90516` push 완료
+
 ### 다음 할 것
 
-1. `git push origin feat/api`
-2. PR #2 생성 — `feat/api → develop` 머지
-3. Phase 3 시작 — `roomi-api/docs/features/phase3-auth.md` 확인 후 Auth 구현
+1. PR #2 생성 — `feat/api → develop` 머지
+2. Phase 3 시작 — `roomi-api/docs/features/phase3-auth.md` 확인 후 Auth 구현
+
+---
+
+## 2026-06-12 | Phase 3 — Auth 구현 시작
+
+### 완료
+
+- [x] PR #2 (`feat/api → develop`) 머지 확인
+- [x] `next-auth@5.0.0-beta.31` 설치
+
+### 완료
+
+- [x] `next-auth@5.0.0-beta.31` 설치
+- [x] `lib/env.ts` — 카카오·네이버 환경변수 4개 추가 (`KAKAO_CLIENT_ID/SECRET`, `NAVER_CLIENT_ID/SECRET`)
+- [x] `lib/auth.ts` — NextAuth 설정 완료
+  - Google·카카오·네이버 Provider 3개
+  - `session: { strategy: "jwt" }`
+  - callbacks 골격 (signIn, jwt, session) — 다음 단계에서 구현
+
+### 진행 중
+
+- [x] `app/api/auth/[...nextauth]/route.ts` — Route Handler 완료
+- [x] `types/index.ts` — Session 타입 확장 완료 (declare module "next-auth")
+- [x] callbacks.signIn — prisma.user.upsert, return true
+- [x] callbacks.jwt — token.id = user.id 저장
+- [x] callbacks.session — session.user.id = token.id 주입
+
+### Claude 직접 수정 기록
+
+- `docs/log/study-log.md` — 목차(Table of Contents) 추가
+- `docs/log/study-log.md` — 코드 작성 완료 섹션 4곳에 "직접 써봤나? ✅" 마커 추가
+  - lib/env.ts, lib/auth.ts, route.ts, types/index.ts (declare module)
+
+### 타입 검사 에러 발생 (2026-06-12)
+
+`npx tsc --noEmit` 실행 결과: 에러 1개
+
+```
+lib/auth.ts:34:11 - error TS2353
+'provider' does not exist in type '...'
+```
+
+원인: `schema.prisma` User 모델에 `provider` 필드 없음 → Prisma 생성 타입과 불일치
+
+### 수정 방향
+
+1. `schema.prisma` User 모델에 `provider String?` 추가
+2. `lib/auth.ts` 34번 줄: `?? ""` → `?? null`
+3. `npx prisma migrate dev --name add-provider-to-user` 실행
+4. `npx tsc --noEmit` 재확인
+
+### 수정 완료
+
+- [x] `schema.prisma` — `provider String?` 추가
+- [x] `lib/auth.ts` — `?? ""` → `?? null` 수정
+- [x] `npx prisma migrate dev --name add-provider-to-user` 성공
+  - 마이그레이션 파일: `prisma/migrations/20260612081109_add_provider_to_user/migration.sql`
+  - Neon DB `User` 테이블에 `provider` 컬럼 추가 완료
+
+### 다음 할 것
+
+1. `npx tsc --noEmit` 재실행 → 오류 0개 확인
+2. Phase 3 커밋 (`feat(auth): NextAuth v5 소셜 로그인 구현 완료`)
+3. PR #3 생성 — `feat/api → develop` 머지
