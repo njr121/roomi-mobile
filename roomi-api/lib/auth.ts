@@ -4,6 +4,9 @@ import Kakao from "next-auth/providers/kakao";
 import Naver from "next-auth/providers/naver";
 import { env } from "./env";
 import { prisma } from "@/lib/prisma";
+import { NextResponse } from "next/server";
+import { apiError } from "@/lib/api-response";
+import { ErrorCode } from "@/lib/errors";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
@@ -46,3 +49,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
   },
 });
+
+export async function requireAuth(): Promise<string | NextResponse> {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return apiError(ErrorCode.UNAUTHORIZED, "로그인이 필요합니다", 401);
+  }
+  return session.user.id;
+}
