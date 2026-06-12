@@ -114,8 +114,20 @@
   - `Write(package-lock.json)`, `Write(.github/workflows/*)`
 - [x] `roomi-api/.claude/settings.local.json` — `../roomi-app/**` 도메인 차단 확인
 - [x] `CLAUDE.md` — "Claude Code 설정 파일" 섹션 추가 (실제 파일 위치·내용 기준)
+- [x] 전체 문서 정합성 수정 — Google 단독 → 4-provider 인증으로 확장
+  - `CLAUDE.md`, `phase3-auth.md`, `phase2-common-modules.md` 반영
+- [x] 파일명 kebab-case 통일 — `dev_log.md` → `dev-log.md`, `error_log.md` → `error-log.md` (git mv)
+- [x] `CLAUDE.md` — 문서 작성 규칙, 코드 사이클, 승인 먼저 섹션 추가
+
+### 커밋 이력
+
+- `f9038a7` — `chore(common): 하네스 차단 규칙 설정 및 Phase 1·2 작업 정의 문서 추가`
+- `ea50a78` — `docs(auth): Phase 3 인증 기능 정의 문서 추가 (4-provider)`
+- `6bea79c` — `docs(common): 문서 작성 규칙, 코드 사이클, 4-provider 인증 확장`
+- `6bfcb86` — `docs(logs): 260612 하네스 정비 및 문서 정합성 수정 기록`
 
 ### 다음 할 것
 
-1. PR #2 생성 — `feat/api → develop` 머지 (Phase 2 커밋 2개)
-2. Phase 3 시작 — `roomi-api/docs/features/phase3-auth.md` 확인 후 Auth 구현
+1. `git push origin feat/api`
+2. PR #2 생성 — `feat/api → develop` 머지
+3. Phase 3 시작 — `roomi-api/docs/features/phase3-auth.md` 확인 후 Auth 구현
