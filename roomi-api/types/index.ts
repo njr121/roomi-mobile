@@ -8,3 +8,11 @@ export type PaginationMeta = {
   total: number;
   totalPages: number;
 };
+declare module "next-auth" {
+  interface Session {
+    user: { id: string };
+  }
+  interface User {
+    id: string;
+  }
+}

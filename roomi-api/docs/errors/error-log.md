@@ -74,3 +74,38 @@ Prisma 6(≥ 5.10)에서는 pooled URL 하나로 마이그레이션까지 처리
 ### 결과
 
 2026-06-11 `npx prisma db pull` 재실행 → 연결 성공 (P4001 = DB empty, 정상)
+
+---
+
+## 2026-06-12 | TS2353 — schema.prisma에 없는 필드를 Prisma upsert에서 사용
+
+### 에러 메시지
+
+```
+lib/auth.ts:34:11 - error TS2353: Object literal may only specify known properties,
+and 'provider' does not exist in type '...'
+
+34           provider: account?.provider ?? "",
+             ~~~~~~~~
+```
+
+### 원인
+
+`lib/auth.ts`의 `prisma.user.upsert` create 블록에 `provider` 필드를 사용했으나,
+`schema.prisma`의 User 모델에 `provider` 컬럼이 정의되어 있지 않음.
+
+Prisma는 `schema.prisma`를 기반으로 TypeScript 타입을 자동 생성하므로,
+schema에 없는 필드를 코드에서 사용하면 TypeScript가 컴파일 시점에 오류를 냄.
+
+### 해결
+
+1. `schema.prisma` User 모델에 `provider String?` 추가
+2. `lib/auth.ts` 34번 줄 수정: `?? ""` → `?? null`
+3. `npx prisma migrate dev --name add-provider-to-user` 실행
+4. `npx tsc --noEmit` 재실행 → 오류 0개 확인
+
+### 교훈
+
+schema.prisma와 소스 코드는 항상 동기화되어야 합니다.
+새 필드를 코드에서 쓰기 전에 schema에 먼저 추가해야 합니다.
+TypeScript가 컴파일 시 잡아주기 때문에 런타임 전에 발견할 수 있습니다.
