@@ -1,9 +1,5 @@
 {
   "permissions": {
-    "deny": [
-      "Write(.env*)",
-      "Write(prisma/migrations/*)",
-      "Write(**/node_modules/**)"
-    ]
+    "deny": ["Write(.env*)", "Write(prisma/migrations/*)", "Write(**/node_modules/**)", "Write(package-lock.json)", "Write(.github/workflows/*)"]
   }
 }
