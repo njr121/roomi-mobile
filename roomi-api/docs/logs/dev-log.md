@@ -257,3 +257,45 @@ lib/auth.ts:34:11 - error TS2353
 1. `git push origin feat/api`
 2. PR #4 생성 (`feat/api → develop`)
 3. Phase 5 시작 — 예약 API
+
+---
+
+## 2026-06-15 | Phase 5 — 예약 API
+
+### 완료
+
+- [x] `app/api/bookings/route.ts` — POST 예약 생성 / GET 내 예약 목록
+  - `requireAuth()` + `instanceof NextResponse` 타입 가드 패턴 적용
+  - Zod 바디 검증 (roomId, checkIn, checkOut, guests)
+  - Room 조회 → 날짜 순서 검증 → 중복 예약 `findFirst` → 금액 계산 → `booking.create`
+  - 중복 날짜 조건: `checkIn: { lt: checkOut }` + `checkOut: { gt: checkIn }`
+  - `Math.round(room.price * nights)` — Int 타입 안전 처리
+  - GET: `findMany` + `include: { room: { include: { accommodation: true } } }` + `orderBy: createdAt desc`
+- [x] `app/api/bookings/[id]/route.ts` — GET 예약 상세
+  - `where: { id, userId: authResult }` — IDOR 방지
+  - 중첩 include (room → accommodation)
+- [x] `app/api/bookings/[id]/cancel/route.ts` — PATCH 예약 취소
+  - 본인 예약 확인 → 이미 취소 여부 확인 → `status: "CANCELLED"` 업데이트
+  - 실제 삭제 없음 (status 변경으로 처리)
+- [x] `npx tsc --noEmit` — 오류 0개 확인
+
+### 기술 결정 사항
+
+- `requireAuth()` 반환 타입 `string | NextResponse` → `instanceof NextResponse` 체크 후 userId로 좁히는 패턴 확립
+- IDOR 방지: `where: { id, userId }` 두 조건 항상 같이 사용
+- 예약 취소: DELETE 아닌 PATCH로 status 변경 (취소 이력 보존)
+
+### Phase 5 완료 ✅
+
+| 항목 | 상태 |
+|---|---|
+| POST /api/bookings (예약 생성) | ✅ |
+| GET /api/bookings (내 목록) | ✅ |
+| GET /api/bookings/:id (상세) | ✅ |
+| PATCH /api/bookings/:id/cancel (취소) | ✅ |
+
+### 다음 할 것
+
+1. `git push origin feat/api`
+2. PR #5 생성 (`feat/api → develop`)
+3. Phase 6 시작 — 찜하기 API
