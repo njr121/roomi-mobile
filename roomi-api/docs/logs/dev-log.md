@@ -191,8 +191,69 @@ lib/auth.ts:34:11 - error TS2353
   - 마이그레이션 파일: `prisma/migrations/20260612081109_add_provider_to_user/migration.sql`
   - Neon DB `User` 테이블에 `provider` 컬럼 추가 완료
 
+### requireAuth() 구현 완료
+
+- [x] `lib/auth.ts` — `requireAuth()` 추가 완료
+  - import 3개 추가 (`NextResponse`, `apiError`, `ErrorCode`)
+  - `Promise<string | NextResponse>` 반환 타입
+  - `auth()` 세션 확인 → 미인증 시 401 반환 → userId 반환
+- [x] `npx tsc --noEmit` — 오류 0개
+- [x] 커밋 `5891c32` — `feat(auth): requireAuth 인증 미들웨어 추가`
+- [x] `git push origin feat/api` — `faf4895..5891c32` push 완료
+
+### Phase 3 완료 ✅
+
+| 항목 | 상태 |
+|---|---|
+| `lib/env.ts` — Kakao·Naver 환경변수 추가 | ✅ |
+| `lib/auth.ts` — NextAuth 3 providers + callbacks | ✅ |
+| `app/api/auth/[...nextauth]/route.ts` — Route Handler | ✅ |
+| `types/index.ts` — Session 타입 확장 | ✅ |
+| `prisma/schema.prisma` — provider 컬럼 추가 | ✅ |
+| `requireAuth()` — 인증 미들웨어 | ✅ |
+| `.env` 실제 키값 입력 | ⏸ 테스트 시 진행 |
+| 이메일/비밀번호 4개 route | ⏸ 시간 부족 시 생략 |
+
 ### 다음 할 것
 
-1. `npx tsc --noEmit` 재실행 → 오류 0개 확인
-2. Phase 3 커밋 (`feat(auth): NextAuth v5 소셜 로그인 구현 완료`)
-3. PR #3 생성 — `feat/api → develop` 머지
+1. ~~PR #3 생성~~ → ✅ Squash merge 완료 (2026-06-12)
+2. Phase 4 시작 — 숙소 목록 API
+
+---
+
+## 2026-06-15 | Phase 4 — 숙소 목록·상세 API + Husky 설치
+
+### 완료
+
+- [x] `app/api/accommodations/route.ts` — GET 목록 API
+  - Zod 쿼리 파라미터 검증 (page, limit, type, sort)
+  - `null → undefined` 변환 (`?? undefined` 패턴)
+  - `prisma.accommodation.findMany` + `count` — `Promise.all` 동시 실행
+  - 페이지네이션 응답 `{ data, pagination: { page, limit, total, totalPages } }`
+- [x] `app/api/accommodations/[id]/route.ts` — GET 상세 API
+  - `params: Promise<{ id: string }>` 경로 파라미터 추출
+  - `prisma.accommodation.findUnique` + `include: { rooms: true }`
+  - 없으면 `404 NOT_FOUND`, 있으면 `apiSuccess`
+- [x] `npx tsc --noEmit` — 오류 0개 확인
+- [x] Husky 설치 (루트) — pre-commit 시 `cd roomi-api && npx tsc --noEmit` 자동 실행
+- [x] 커밋 `d2ba923` — `feat(accommodation): 숙소 목록·상세 API 구현`
+
+### 기술 결정 사항
+
+- `Promise.all` 사용 — `findMany`와 `count`를 순차가 아닌 동시 실행으로 성능 개선
+- `?? undefined` 패턴 — `searchParams.get()`의 `null` 반환값을 `undefined`로 변환해야 Zod `.default()` 작동
+- Husky는 `.git`이 있는 루트에만 설치 (서브폴더 설치 불가)
+
+### Phase 4 완료 ✅
+
+| 항목 | 상태 |
+|---|---|
+| GET /api/accommodations (목록) | ✅ |
+| GET /api/accommodations/:id (상세) | ✅ |
+| Husky pre-commit hook | ✅ |
+
+### 다음 할 것
+
+1. `git push origin feat/api`
+2. PR #4 생성 (`feat/api → develop`)
+3. Phase 5 시작 — 예약 API
