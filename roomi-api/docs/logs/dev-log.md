@@ -191,8 +191,30 @@ lib/auth.ts:34:11 - error TS2353
   - 마이그레이션 파일: `prisma/migrations/20260612081109_add_provider_to_user/migration.sql`
   - Neon DB `User` 테이블에 `provider` 컬럼 추가 완료
 
+### requireAuth() 구현 완료
+
+- [x] `lib/auth.ts` — `requireAuth()` 추가 완료
+  - import 3개 추가 (`NextResponse`, `apiError`, `ErrorCode`)
+  - `Promise<string | NextResponse>` 반환 타입
+  - `auth()` 세션 확인 → 미인증 시 401 반환 → userId 반환
+- [x] `npx tsc --noEmit` — 오류 0개
+- [x] 커밋 `5891c32` — `feat(auth): requireAuth 인증 미들웨어 추가`
+- [x] `git push origin feat/api` — `faf4895..5891c32` push 완료
+
+### Phase 3 완료 ✅
+
+| 항목 | 상태 |
+|---|---|
+| `lib/env.ts` — Kakao·Naver 환경변수 추가 | ✅ |
+| `lib/auth.ts` — NextAuth 3 providers + callbacks | ✅ |
+| `app/api/auth/[...nextauth]/route.ts` — Route Handler | ✅ |
+| `types/index.ts` — Session 타입 확장 | ✅ |
+| `prisma/schema.prisma` — provider 컬럼 추가 | ✅ |
+| `requireAuth()` — 인증 미들웨어 | ✅ |
+| `.env` 실제 키값 입력 | ⏸ 테스트 시 진행 |
+| 이메일/비밀번호 4개 route | ⏸ 시간 부족 시 생략 |
+
 ### 다음 할 것
 
-1. `npx tsc --noEmit` 재실행 → 오류 0개 확인
-2. Phase 3 커밋 (`feat(auth): NextAuth v5 소셜 로그인 구현 완료`)
-3. PR #3 생성 — `feat/api → develop` 머지
+1. ~~PR #3 생성~~ → ✅ Squash merge 완료 (2026-06-12)
+2. Phase 4 시작 — 숙소 목록 API
