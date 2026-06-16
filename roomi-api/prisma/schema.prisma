@@ -81,6 +81,7 @@ model Wishlist {
   user            User @relation(fields: [userId], references: [id], onDelete: Cascade)
   accommodationId String 
   accommodation   Accommodation @relation(fields: [accommodationId], references: [id], onDelete: Cascade)
+  createdAt       DateTime @default(now())
   @@unique([userId, accommodationId])
   @@index([userId])
 }
