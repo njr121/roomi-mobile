@@ -299,3 +299,44 @@ lib/auth.ts:34:11 - error TS2353
 1. `git push origin feat/api`
 2. PR #5 생성 (`feat/api → develop`)
 3. Phase 6 시작 — 찜하기 API
+
+---
+
+## 2026-06-16 | Phase 6 — 찜하기 API
+
+### 완료
+
+- [x] `docs/features/phase6-wishlist.md` 기능 정의 문서 작성
+- [x] `schema.prisma` Wishlist 모델에 `createdAt DateTime @default(now())` 추가
+- [x] `npx prisma migrate dev --name add-createdAt-to-wishlist` 성공
+  - 마이그레이션 파일: `prisma/migrations/20260616021041_add_created_at_to_wishlist/migration.sql`
+- [x] `app/api/wishlists/route.ts` — POST (찜 추가) / GET (내 목록) 완성
+  - 중복 확인 → 409 WISHLIST_ALREADY_EXISTS
+  - `orderBy: { createdAt: "desc" }` 정렬 포함
+- [x] `npx tsc --noEmit` — 오류 0개 확인
+
+### 완료 (추가)
+
+- [x] `app/api/wishlists/[accommodationId]/route.ts` — DELETE (찜 삭제) 완성
+  - `findFirst({ where: { userId, accommodationId } })` → null 시 404
+  - `delete({ where: { id: wishlist.id } })` → 삭제 후 200 반환
+- [x] `npx tsc --noEmit` — 오류 0개 확인
+
+### 기술 결정 사항
+
+- `findFirst` 사용: userId + accommodationId 조합 조건은 `findUnique`로 쓸 수 없음 (unique 필드 단독이 아님)
+- 삭제 전 `findFirst` 존재 확인 필수: Prisma `delete`는 대상 없으면 런타임 에러 발생
+
+### Phase 6 완료 ✅
+
+| 항목 | 상태 |
+|---|---|
+| POST /api/wishlists (찜 추가) | ✅ |
+| GET /api/wishlists (내 목록) | ✅ |
+| DELETE /api/wishlists/:accommodationId (찜 삭제) | ✅ |
+| schema.prisma createdAt 추가 + 마이그레이션 | ✅ |
+
+### 다음 할 것
+
+- PR #6 머지 완료 (`feat/api → develop`) — 2026-06-16
+- 다음 Phase 검토
