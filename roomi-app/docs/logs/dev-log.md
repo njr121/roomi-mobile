@@ -130,6 +130,12 @@
 1. UI 디자인 개선 (Steam 스토어 참고 — 가로 배치, 배지·가격 타이포그래피)
 2. Phase 10 — 실제 API 연동 (TanStack Query, mock 데이터 대체)
 
+### Phase 10 feature 문서 작성
+
+- [x] `docs/features/phase10-data-integration.md` 작성 완료
+- 범위: roomi-api 서버 실행 → lib/env.ts → lib/api.ts → TanStack Query Provider → useAccommodations 훅 → index.tsx 데이터 교체
+- 디자인 개선은 모든 화면 기능 완성 후 일괄 적용으로 결정, 다음 세션은 Phase 10부터 시작
+
 ---
 
 ## 260617 — 핵심 패키지 설치 완료 (Phase 7 패키지 단계 종료)
