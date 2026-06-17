@@ -98,7 +98,7 @@
 1. `metro.config.js` — `require()` 구조 분해 할당(`{ }`) 누락으로 `getDefaultConfig is not a function`
 2. `babel.config.js` — Reanimated 플러그인 누락으로 `__reanimatedLoggerConfig is not defined`
 
-둘 다 babel/metro 설정 파일을 처음부터 새로 만들면서, 기존에 암묵적으로 들어가 있던 설정을 놓친 경우. 상세: `roomi-app/docs/errors/error-log.md` 2026-06-17 항목. 개념 보강: `docs/log/study-log.md` "require() 구조 분해" 섹션
+둘 다 babel/metro 설정 파일을 처음부터 새로 만들면서, 기존에 암묵적으로 들어가 있던 설정을 놓친 경우. 상세: `roomi-app/docs/errors/error-log.md` 2026-06-17 항목
 
 ### 다음
 
@@ -107,19 +107,40 @@
 
 ---
 
+## 260617 — Phase 9 완료 (첫 화면 — AccommodationCard, mock 데이터)
+
+### Phase 9 완료 ✅
+
+| 항목 | 상태 |
+|---|---|
+| `types/index.ts` — Accommodation 타입 정의 | ✅ |
+| `components/PriceChangeBadge.tsx` — 가격 변동률 뱃지 | ✅ |
+| `components/AccommodationCard.tsx` — 숙소 카드 | ✅ |
+| mock 데이터 4건 작성 | ✅ |
+| `app/(tabs)/index.tsx` — FlatList로 목록 렌더링 | ✅ |
+| `npx tsc --noEmit` 오류 0개 | ✅ |
+| `npx expo start` 정상 구동, 카드 4개 + 색상 3종 정상 표시 확인 | ✅ |
+
+### 기준 변경
+
+`PriceChangeBadge` 색상 경계값을 "+30% 이하 초록"에서 "+30% 미만 초록(30%부터 주황)"으로 변경. `CLAUDE.local.md`, `phase9-first-screen.md` 반영 완료. PRD는 별도 처리.
+
+### 다음
+
+1. UI 디자인 개선 (Steam 스토어 참고 — 가로 배치, 배지·가격 타이포그래피)
+2. Phase 10 — 실제 API 연동 (TanStack Query, mock 데이터 대체)
+
+---
+
 ## 260617 — 핵심 패키지 설치 완료 (Phase 7 패키지 단계 종료)
 
 ### 완료
 
 - [x] `zustand@^5.0.14`, `@tanstack/react-query@^5.101.0`, `react-hook-form@^7.79.0` 설치
-- [x] `zod@3.24.1` 고정 설치 (npm이 최신 v4를 가져와서 버전 명시 재설치 — 상세는 error-log.md 아님, study-log.md "npm ERESOLVE" 섹션 참고)
+- [x] `zod@3.24.1` 고정 설치 (npm이 최신 v4를 가져와서 버전 명시 재설치)
 - [x] `npx tsc --noEmit` 오류 0건 — 패키지 설치 단계 완료
 
 ### 다음
 
 1. NativeWind 세부 설정 (global.css → tailwind.config.js → babel.config.js → metro.config.js)
 2. 첫 화면(AccommodationCard 등) 작업 시작
-
-### 학습 보강
-
-- nativewind / tailwindcss / react-native-css-interop 패키지 3종 역할 구분 설명 → `docs/log/study-log.md`에 기록
