@@ -229,3 +229,78 @@ The `babel-plugin-react-compiler` must be installed before you can use React Com
 `create-expo-app@latest`로 생성하면 그 시점 최신 SDK(54) 기준 기본값이 함께 따라온다. SDK를 낮추는 다운그레이드 작업을 했다면, `package.json`(devDependencies)뿐 아니라 `app.json`의 `experiments` 같은 설정값도 다운그레이드 대상 SDK에 맞는지 확인해야 한다.
 
 ---
+
+## 2026-06-17 | metro.config.js — 구조 분해 할당 누락으로 getDefaultConfig is not a function
+
+### 에러 메시지
+
+```
+TypeError: getDefaultConfig is not a function
+    at Object.<anonymous> (roomi-app/metro.config.js:4:16)
+```
+
+### 원인
+
+```js
+// 실제로 작성된 코드
+const getDefaultConfig = require("expo/metro-config");
+const withNativeWind = require("nativewind/metro");
+```
+
+`expo/metro-config`와 `nativewind/metro`는 둘 다 함수를 이름 붙여서 내보내는(named export) 모듈이라, `{ }`로 구조 분해해서 꺼내야 한다. `{ }` 없이 받으면 변수에 함수가 아니라 **모듈 전체 객체**(`{ getDefaultConfig, createStableModuleIdFactory, ... }`)가 담겨서, 그걸 함수처럼 호출하면 에러가 난다. 코드 리뷰 단계에서 이 부분을 놓치고 통과시킨 것도 원인 중 하나.
+
+### 해결
+
+```diff
+- const getDefaultConfig = require("expo/metro-config");
+- const withNativeWind = require("nativewind/metro");
++ const { getDefaultConfig } = require("expo/metro-config");
++ const { withNativeWind } = require("nativewind/metro");
+```
+
+### 교훈
+
+`require()` 결과를 받을 때 `{ }`가 있고 없고는 "그 모듈 전체를 받는다"와 "그 모듈 안의 특정 함수만 꺼내 받는다"의 차이다. 둘 다 에러 없이 변수에 값이 할당되기 때문에, 실제로 그 변수를 함수로 호출하는 순간에야 문제가 드러난다. 코드 리뷰 시 `require`/`import` 구문도 빠뜨리지 않고 확인해야 한다.
+
+---
+
+## 2026-06-17 | babel.config.js — Reanimated 플러그인 누락으로 __reanimatedLoggerConfig is not defined
+
+### 에러 메시지
+
+```
+Metro error: __reanimatedLoggerConfig is not defined
+```
+
+### 원인
+
+`babel.config.js`가 원래 없던 상태에서 NativeWind 연결을 위해 새로 만들면서, `babel-preset-expo`가 내부적으로 자동 처리해주던 `react-native-reanimated`용 babel 플러그인 등록이 함께 빠졌다. 이 프로젝트는 `react-native-reanimated`(Expo Router 네비게이션 애니메이션 등에서 사용)가 설치돼 있어서 이 플러그인이 필수다.
+
+### 해결
+
+`plugins` 배열에 reanimated 플러그인을 **마지막 항목으로** 추가.
+
+```diff
+module.exports = function (api) {
+  api.cache(true);
+  return {
+    presets: [
+      ["babel-preset-expo", { jsxImportSource: "nativewind" }],
+      "nativewind/babel",
+    ],
++   plugins: ["react-native-reanimated/plugin"],
+  };
+};
+```
+
+추가로 babel 설정 변경 후에는 Metro 캐시도 같이 지워야 한다.
+
+```bash
+npx expo start -c
+```
+
+### 교훈
+
+`babel.config.js`가 없던 프로젝트에 새로 파일을 만들면, 그동안 암묵적으로 적용되던 설정(이번엔 reanimated 플러그인)이 함께 빠질 수 있다. 새 설정 파일을 만들 때는 "원래 뭐가 자동으로 들어가 있었는지"까지 함께 확인해야 한다. 또한 babel 설정처럼 빌드 파이프라인 앞단의 설정을 바꾸면 캐시(`-c`)를 지우고 재시작해야 변경이 확실히 반영된다.
+
+---

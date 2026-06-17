@@ -78,6 +78,35 @@
 
 ---
 
+## 260617 — Phase 8 완료 (NativeWind 세부 설정)
+
+### Phase 8 완료 ✅
+
+| 항목 | 상태 |
+|---|---|
+| `global.css` 작성 | ✅ |
+| `tailwind.config.js` 작성 | ✅ |
+| `babel.config.js` 작성 | ✅ |
+| `metro.config.js` 작성 | ✅ |
+| `app/_layout.tsx`에 `global.css` import | ✅ |
+| `npx tsc --noEmit` 오류 0개 | ✅ |
+| `npx expo start` 정상 구동 | ✅ |
+| `className="bg-red-500"` 실제 화면 반영 확인 | ✅ |
+
+### 에러 이력 (중요)
+
+1. `metro.config.js` — `require()` 구조 분해 할당(`{ }`) 누락으로 `getDefaultConfig is not a function`
+2. `babel.config.js` — Reanimated 플러그인 누락으로 `__reanimatedLoggerConfig is not defined`
+
+둘 다 babel/metro 설정 파일을 처음부터 새로 만들면서, 기존에 암묵적으로 들어가 있던 설정을 놓친 경우. 상세: `roomi-app/docs/errors/error-log.md` 2026-06-17 항목. 개념 보강: `docs/log/study-log.md` "require() 구조 분해" 섹션
+
+### 다음
+
+1. Phase 8 커밋 → push
+2. 첫 화면(AccommodationCard 등) 작업 시작
+
+---
+
 ## 260617 — 핵심 패키지 설치 완료 (Phase 7 패키지 단계 종료)
 
 ### 완료
