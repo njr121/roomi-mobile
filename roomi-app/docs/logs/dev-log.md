@@ -205,7 +205,29 @@ Expo 웹에서 최종 확인 중 "데이터를 불러오지 못했습니다" 발
 
 **Phase 10 전체 완료** — mock 데이터 → 실제 백엔드 데이터 연동 끝남
 
+### 커밋 + push 완료
+- `feat/app`: `df45860`, `a86960a`, `b65b026`
+- `feat/api`: `0e05575`
+
+### Phase 11 — 숙소 상세 화면 (`phase11-detail-screen.md` 작성 완료)
+
+- 범위: `types/index.ts` 보강(`thumbnail`→`images` 등 버그 수정 포함) → `lib/api.ts`에 상세 API 함수 추가 → `useAccommodationDetail` 훅 → `app/accommodation/[id].tsx` 라우트 → 홈 화면 카드 탭 연결
+- 주의점: 상세 API는 목록 API와 응답 구조가 다름(한 겹 vs 두 겹)
+
+### Phase 11 전체 완료 ✅
+
+| 파일 | 내용 |
+|---|---|
+| `types/index.ts` | `thumbnail` 제거, `location`/`description`/`rating`/`images` 추가, `Room`/`AccommodationDetail` 신규 |
+| `components/AccommodationCard.tsx` | `thumbnail` → `images[0]` 버그 수정 |
+| `lib/api.ts` | `getAccommodationDetail(id)` 추가 |
+| `hooks/useAccommodationDetail.ts` | 신규 |
+| `app/accommodation/[id].tsx` | 상세 화면 신규(동적 라우트), 헤더 제목 동적 설정 |
+| `app/(tabs)/index.tsx` | 카드 탭 → 상세 이동 연결 |
+
+`tsc --noEmit` 오류 0개, Expo 웹에서 전체 플로우(탭 → 상세 → 뒤로가기) 확인 완료.
+
 ### 다음
 
-1. 커밋 (`feat/app`: Phase 10 변경분 + 색상 수정 / `feat/api`: CORS 수정)
+1. 커밋
 2. 다음 화면 착수
