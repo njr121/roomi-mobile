@@ -10,11 +10,13 @@ export function PriceChangeBadge({ rate }: PriceChangeBadgeProps) {
     bgColor = "bg-red-500";
   } else if (rate >= 30) {
     bgColor = "bg-orange-500";
+  } else if (rate < 0) {
+    bgColor = "bg-blue-500";
   }
 
   return (
     <View className={bgColor}>
-      <Text>{`+${rate}%`}</Text>
+      <Text>{`${rate > 0 ? "+" : ""}${rate}%`}</Text>
     </View>
   );
 }
