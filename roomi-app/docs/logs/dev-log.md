@@ -227,7 +227,14 @@ Expo 웹에서 최종 확인 중 "데이터를 불러오지 못했습니다" 발
 
 `tsc --noEmit` 오류 0개, Expo 웹에서 전체 플로우(탭 → 상세 → 뒤로가기) 확인 완료.
 
+### 커밋 + push 완료 — `5548746`
+
+### Phase 12 — 인증 설계 완료 (`phase12-auth.md`)
+
+- 백엔드 `requireAuth()`가 쿠키(웹) 전용이라 RN 앱은 그대로 못 씀 → 모바일 전용 토큰 발급 라우트 신규 추가 + `requireAuth()` 확장(쿠키 또는 Bearer 토큰)으로 결정
+- Google 1개 provider로 먼저 정식 OAuth 구현, 카카오·네이버는 패턴 확인 후 추가
+- 백엔드(jose 설치, 신규 라우트, requireAuth 확장) + 외부설정(Google Console) + 프론트(authStore, api.ts 토큰 첨부, 로그인 화면) 순서로 정의
+
 ### 다음
 
-1. 커밋
-2. 다음 화면 착수
+1. Phase 12 구현 착수 (다음 세션 — 야간 또는 주말 가능)
