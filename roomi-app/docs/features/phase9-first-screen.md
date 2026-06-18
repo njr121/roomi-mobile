@@ -31,7 +31,7 @@ Phase 7~8에서 Expo 세팅과 NativeWind 연결까지 완료. 이 문서는 실
 
 **위치**: `roomi-app/types/index.ts` (신규 생성)
 
-**정의 (포함될 필드)**: `id`, `name`, `type`, `thumbnail`, `normalPrice`(평소가), `currentPrice`(현재가), `priceChangeRate`(상승률)
+**정의 (포함될 필드)**: `id`, `name`, `type`, `thumbnail`, `normalPrice`(평소가), `currentPrice`(현재가), `priceChangeRate`(변동률, 음수면 할인)
 
 **확인할 것**: 필드명이 백엔드 Accommodation 모델과 동일한지 (나중에 실제 연동 시 변환 코드가 필요 없도록)
 
@@ -41,13 +41,13 @@ Phase 7~8에서 Expo 세팅과 NativeWind 연결까지 완료. 이 문서는 실
 
 ## 2. components/PriceChangeBadge.tsx
 
-**목적**: 상승률 숫자를 받아서 색깔이 다른 뱃지로 보여주는 작은 컴포넌트
+**목적**: 변동률 숫자를 받아서 색깔이 다른 뱃지로 보여주는 작은 컴포넌트
 
 **위치**: `roomi-app/components/PriceChangeBadge.tsx` (신규 생성)
 
-**정의**: `priceChangeRate`(숫자) prop을 받아서, 규칙(CLAUDE.local.md 기준 — +30% 미만 초록, +100% 이상 빨강, 그 사이는 중간색)에 따라 배경색이 다른 작은 텍스트 뱃지를 렌더링
+**정의**: `priceChangeRate`(숫자) prop을 받아서, 규칙(CLAUDE.local.md 기준 — 음수(할인) 파란색, 0%~29% 초록, +30%~99% 주황, +100% 이상 빨강)에 따라 배경색이 다른 작은 텍스트 뱃지를 렌더링 (2026-06-18: 할인 구간 추가)
 
-**확인할 것**: 색상 분기 조건 3단계(초록/중간/빨강)가 명확히 나뉘는지
+**확인할 것**: 색상 분기 조건 4단계(파랑/초록/주황/빨강)가 명확히 나뉘는지
 
 **성공 기준**: 다른 숫자를 넣었을 때 색이 바뀌는지 눈으로 확인
 

@@ -150,3 +150,62 @@
 
 1. NativeWind 세부 설정 (global.css → tailwind.config.js → babel.config.js → metro.config.js)
 2. 첫 화면(AccommodationCard 등) 작업 시작
+
+---
+
+## 260618 — Husky 설치 (Phase 10 착수 전)
+
+### 완료
+
+- [x] 루트 `package.json` 신규 작성 (husky devDependency + prepare 스크립트)
+- [x] `npm install`로 husky 셋업
+- [x] `.husky/pre-commit` 작성 — `cd roomi-app && npx tsc --noEmit`
+- [x] 타입 에러 의도적 발생 → 커밋 차단 확인 → 수정 후 정상 커밋 확인
+- [x] 커밋 `018dda7`
+
+### 기술 결정
+
+- `.husky/_`는 husky 내부 엔진(수정 금지), 실제 검사 명령은 `.husky/pre-commit`(최상위, `_`와 형제 위치)에 작성
+- `feat/api`도 동일한 패턴으로 이미 설치돼 있음(`cd roomi-api && npx tsc --noEmit`) — 브랜치마다 자기 도메인 검사만 실행
+
+### Phase 10 1단계 완료 — roomi-api 서버 실행 (같은 날 이어서)
+
+- [x] `git worktree add ../roomi-api-server feat/api` — feat/app 작업 폴더는 그대로 두고 별도 폴더에 백엔드 동시 체크아웃
+- [x] `.env` 복사 → `npm install` → `npm run dev` 정상 기동 확인
+- [x] `GET http://localhost:3000/api/accommodations` → 200, 시드 데이터 JSON 응답 확인
+- [x] `.env`에 `EXPO_PUBLIC_API_URL=http://localhost:3000` 추가 완료 (사용자 직접)
+
+### 이슈 발견 — Next.js 버전 불일치 (보류)
+
+`roomi-api/package.json`의 `next` 버전이 규칙(15.x)과 다른 `16.2.9`로 박혀있는 걸 서버 기동 중 발견. Phase 1~6이 이미 이 버전으로 완성돼 있어 지금 다운그레이드는 위험 부담이 더 크다고 판단해 기술 부채로 기록만 하고 보류. 상세: `roomi-app/docs/errors/error-log.md` 2026-06-18 항목
+
+### Phase 10 2~6단계 완료
+
+| 파일 | 내용 | 상태 |
+|---|---|---|
+| `lib/env.ts` | `EXPO_PUBLIC_API_URL` Zod 검증 | ✅ |
+| `lib/api.ts` | `getAccommodations()` fetch 래퍼 | ✅ |
+| `app/_layout.tsx` | `QueryClientProvider` 추가 | ✅ |
+| `hooks/useAccommodations.ts` | `useQuery` 훅 | ✅ |
+| `app/(tabs)/index.tsx` | mock → 실제 데이터, 로딩/에러 분기 | ✅ |
+
+매 단계 `npx tsc --noEmit` 오류 0개 확인.
+
+### Phase 10 7단계 — CORS 에러로 보류
+
+Expo 웹에서 최종 확인 중 "데이터를 불러오지 못했습니다" 발생. 원인은 백엔드 CORS 헤더 누락(`roomi-api` 도메인 문제, `feat/app` 범위 밖). `curl` 직접 호출은 200 정상 — 서버 자체는 문제 없음. 상세: `docs/errors/error-log.md` 2026-06-18 항목.
+
+### CORS 해결 + 음수(할인) 디자인 결정 + Phase 10 완료 ✅
+
+- [x] `roomi-api`(worktree) `next.config.ts`에 CORS 헤더 추가 → Expo 웹에서 실제 데이터 정상 표시
+- [x] `PriceChangeBadge` 부호 버그(`+-4%`) 발견·수정
+- [x] 정책 결정: 음수(할인) 노출 — "변동률"로 컨셉 재정의(상승+할인 모두), 색상 4단계(할인 파랑/0~29 초록/30~99 주황/100+ 빨강)로 확장
+- [x] 용어 동기화: `CLAUDE.md`, `CLAUDE.local.md`, `phase9-first-screen.md`, PRD(`v9`, 웹 클로드 경유) 전부 "상승률"→"변동률"
+- [x] 최종 검증: Expo 웹에서 할인/일반 카드 색상·부호·정렬 전부 정상 확인
+
+**Phase 10 전체 완료** — mock 데이터 → 실제 백엔드 데이터 연동 끝남
+
+### 다음
+
+1. 커밋 (`feat/app`: Phase 10 변경분 + 색상 수정 / `feat/api`: CORS 수정)
+2. 다음 화면 착수
