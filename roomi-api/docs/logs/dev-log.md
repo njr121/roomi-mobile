@@ -379,3 +379,12 @@ lib/auth.ts:34:11 - error TS2353
 
 1. Google Cloud Console에서 모바일용 OAuth 클라이언트 ID 발급 (사용자 직접)
 2. 프론트 4단계 — `store/authStore.ts` → `lib/api.ts` 토큰 첨부 → 로그인 화면
+
+### 보류 확인 — 카카오·네이버 모바일 로그인 (2026-06-19)
+
+PRD 원래 범위는 Google·카카오·네이버 3개 소셜 로그인이다. 현재 상태 정리:
+
+- 웹(쿠키 기반) 로그인은 `lib/auth.ts`의 NextAuth 설정에 3개 provider가 Phase 3부터 이미 다 등록돼 있어 동작함
+- 오늘 만든 모바일 전용 토큰 발급 라우트(`/api/auth/mobile/google`)는 Google 1개만 구현 — `phase12-auth.md`에 "Google로 패턴 검증 후 시간 남으면 카카오·네이버 추가"로 이미 명시된 의도적 보류
+- 패턴이 검증됐으므로, 카카오·네이버 모바일 라우트는 `/api/auth/mobile/google/route.ts`를 복사해서 provider 이름과 토큰 검증 엔드포인트만 바꾸는 수준의 작업
+- 착수 시점은 Claude가 추후 일정 보고 판단 — 사용자 별도 지시 없어도 적절한 시점에 제안할 것
