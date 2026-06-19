@@ -340,3 +340,42 @@ lib/auth.ts:34:11 - error TS2353
 
 - PR #6 머지 완료 (`feat/api → develop`) — 2026-06-16
 - 다음 Phase 검토
+
+---
+
+## 2026-06-19 | Phase 12 — 모바일 인증 1~2단계
+
+### 완료
+
+- [x] `jose@^6.2.3` 설치 (명시 버전, `latest` 아님)
+- [x] `lib/env.ts`에 `MOBILE_JWT_SECRET` 검증 추가
+- [x] `app/api/auth/mobile/google/route.ts` 신규 작성
+  - `request.json()` → `idToken` 구조분해 → 없으면 400
+  - 구글 `tokeninfo` 엔드포인트로 진위 확인 → `.ok` 아니면 401
+  - `googleResponse.json()`으로 email/name 추출
+  - `prisma.user.upsert`로 회원가입/로그인 동시 처리 (`provider: "google"`)
+  - `jose`의 `SignJWT`로 `{ userId: user.id }` 서명, 만료 30일
+  - `apiSuccess({ token, user })` 응답
+- [x] `npx tsc --noEmit` 오류 0개
+
+### 기술 결정
+
+- `requireAuth()`를 이 라우트 안에서 호출하지 않음 — 이 라우트 자체가 "로그인하기 위해" 부르는 곳이라 아직 토큰이 없는 게 정상이라서 인증 체크 대상이 아님
+
+### 다음
+
+1. `lib/auth.ts`의 `requireAuth()` 확장 — 쿠키 세션 실패 시 `Authorization: Bearer <token>` 헤더도 `jose`로 검증하도록 추가
+
+### Phase 12 3단계 완료 — `requireAuth()` 확장 (2026-06-19)
+
+- [x] 쿠키 세션 있으면 `session.user.id` 즉시 반환 (기존 웹 흐름 그대로 유지)
+- [x] 쿠키 세션 없으면 `Authorization: Bearer <token>` 헤더 확인 → `jose`의 `jwtVerify`로 검증 → 통과 시 `payload.userId` 반환
+- [x] 검증 실패(헤더 없음/형식 틀림/토큰 위조·만료) 시 기존과 동일한 401 응답
+- [x] `npx tsc --noEmit` 오류 0개 확인
+
+**Phase 12 백엔드(1~3단계) 전체 완료** — 다음은 Google Cloud Console 모바일 클라이언트 ID 발급(사용자 직접) → 프론트(`authStore`, `lib/api.ts`, 로그인 화면)
+
+### 다음
+
+1. Google Cloud Console에서 모바일용 OAuth 클라이언트 ID 발급 (사용자 직접)
+2. 프론트 4단계 — `store/authStore.ts` → `lib/api.ts` 토큰 첨부 → 로그인 화면
