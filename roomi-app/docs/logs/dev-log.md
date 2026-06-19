@@ -235,6 +235,10 @@ Expo 웹에서 최종 확인 중 "데이터를 불러오지 못했습니다" 발
 - Google 1개 provider로 먼저 정식 OAuth 구현, 카카오·네이버는 패턴 확인 후 추가
 - 백엔드(jose 설치, 신규 라우트, requireAuth 확장) + 외부설정(Google Console) + 프론트(authStore, api.ts 토큰 첨부, 로그인 화면) 순서로 정의
 
+### Phase 12 구현 방식 최종 확정 — 단순 버전 유지
+
+더 정교한 패턴(Account 재사용, RefreshToken 회전)을 검토했으나, 마감 대비 위험이 커서 단순 버전(JWT 1개, 회전 없음)으로 최종 확정.
+
 ### 다음
 
-1. Phase 12 구현 착수 (다음 세션 — 야간 또는 주말 가능)
+1. Phase 12 구현 착수 (다음 세션 — 야간 또는 주말 가능), `phase12-auth.md` 설계 그대로
