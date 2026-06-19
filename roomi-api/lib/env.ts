@@ -10,6 +10,7 @@ const EnvSchema = z.object({
   KAKAO_CLIENT_SECRET: z.string().min(1),
   NAVER_CLIENT_ID: z.string().min(1),
   NAVER_CLIENT_SECRET: z.string().min(1),
+  MOBILE_JWT_SECRET: z.string().min(1),
 });
 
 const _env = EnvSchema.safeParse(process.env);

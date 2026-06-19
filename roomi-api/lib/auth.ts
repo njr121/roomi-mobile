@@ -7,6 +7,8 @@ import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { apiError } from "@/lib/api-response";
 import { ErrorCode } from "@/lib/errors";
+import { headers } from "next/headers";
+import { jwtVerify } from "jose";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
@@ -52,8 +54,24 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
 export async function requireAuth(): Promise<string | NextResponse> {
   const session = await auth();
-  if (!session?.user?.id) {
+  if (session?.user?.id) {
+    return session.user.id as string;
+  }
+
+  const headersList = await headers();
+  const authHeader = headersList.get("authorization");
+
+  if (!authHeader || !authHeader.startsWith("Bearer")) {
     return apiError(ErrorCode.UNAUTHORIZED, "로그인이 필요합니다", 401);
   }
-  return session.user.id;
+
+  const token = authHeader.replace("Bearer ", "");
+  const secret = new TextEncoder().encode(env.MOBILE_JWT_SECRET);
+
+  try {
+    const { payload } = await jwtVerify(token, secret);
+    return payload.userId as string;
+  } catch {
+    return apiError(ErrorCode.UNAUTHORIZED, "로그인이 필요합니다", 401);
+  }
 }
