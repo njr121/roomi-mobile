@@ -1,5 +1,6 @@
-import { FlatList, Text, Pressable } from "react-native";
+import { FlatList, Text, View, Pressable } from "react-native";
 import { AccommodationCard } from "@/components/AccommodationCard";
+import { WishlistButton } from "@/components/WishlistButton";
 import { useAccommodations } from "@/hooks/useAccommodations";
 import { Link } from "expo-router";
 
@@ -17,11 +18,16 @@ export default function HomeScreen() {
       data={data}
       keyExtractor={(item) => item.id}
       renderItem={({ item }) => (
-        <Link href={`/accommodation/${item.id}`} asChild>
-          <Pressable>
-            <AccommodationCard accommodation={item} />
-          </Pressable>
-        </Link>
+        <View className="relative">
+          <Link href={`/accommodation/${item.id}`} asChild>
+            <Pressable>
+              <AccommodationCard accommodation={item} />
+            </Pressable>
+          </Link>
+          <View className="absolute right-1 top-1">
+            <WishlistButton accommodationId={item.id} />
+          </View>
+        </View>
       )}
     />
   );

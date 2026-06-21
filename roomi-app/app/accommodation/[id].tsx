@@ -1,7 +1,8 @@
-import { ScrollView, Text } from "react-native";
-import { useLocalSearchParams, Stack } from "expo-router";
+import { ScrollView, Text, View, Pressable } from "react-native";
+import { useLocalSearchParams, Stack, router } from "expo-router";
 import { useAccommodationDetail } from "@/hooks/useAccommodationDetail";
 import { PriceChangeBadge } from "@/components/PriceChangeBadge";
+import { WishlistButton } from "@/components/WishlistButton";
 
 export default function AccommodationDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -18,7 +19,10 @@ export default function AccommodationDetailScreen() {
   return (
     <ScrollView>
       <Stack.Screen options={{ title: data.name }} />
-      <Text>{data.name}</Text>
+      <View className="flex-row items-center justify-between">
+        <Text>{data.name}</Text>
+        <WishlistButton accommodationId={data.id} />
+      </View>
       <Text>{data.location}</Text>
       <Text className="line-through">{data.normalPrice}원</Text>
       <Text>{data.currentPrice}원</Text>
@@ -27,9 +31,26 @@ export default function AccommodationDetailScreen() {
       <Text>평점 {data.rating}</Text>
 
       {data.rooms.map((room) => (
-        <Text key={room.id}>
-          {room.name} · {room.price}원 · 최대 {room.maxGuests}명
-        </Text>
+        <Pressable
+          key={room.id}
+          className="min-h-11 flex-row items-center justify-between border-b border-gray-200 px-4 py-3"
+          onPress={() =>
+            router.push({
+              pathname: "/booking/[roomId]",
+              params: {
+                roomId: room.id,
+                roomName: room.name,
+                price: String(room.price),
+                maxGuests: String(room.maxGuests),
+              },
+            })
+          }
+        >
+          <Text>
+            {room.name} · {room.price}원 · 최대 {room.maxGuests}명
+          </Text>
+          <Text className="text-blue-500">예약하기</Text>
+        </Pressable>
       ))}
     </ScrollView>
   );
