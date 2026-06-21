@@ -159,12 +159,6 @@
 - [x] callbacks.jwt — token.id = user.id 저장
 - [x] callbacks.session — session.user.id = token.id 주입
 
-### Claude 직접 수정 기록
-
-- `docs/log/study-log.md` — 목차(Table of Contents) 추가
-- `docs/log/study-log.md` — 코드 작성 완료 섹션 4곳에 "직접 써봤나? ✅" 마커 추가
-  - lib/env.ts, lib/auth.ts, route.ts, types/index.ts (declare module)
-
 ### 타입 검사 에러 발생 (2026-06-12)
 
 `npx tsc --noEmit` 실행 결과: 에러 1개
