@@ -354,3 +354,173 @@ npx expo start -c
 "서버가 200을 응답했다"와 "클라이언트가 그 데이터를 실제로 받았다"는 다른 이야기일 수 있다. 브라우저 기반 클라이언트(웹)는 서버와 별개로 CORS라는 자체 보안 정책을 적용하기 때문에, `fetch` 에러가 나면 서버 로그(`curl`로 직접 확인)와 클라이언트 환경(포트·출처)을 분리해서 원인을 좁혀야 한다.
 
 ---
+
+## 2026-06-21 | expo-secure-store가 웹에서 동작하지 않음
+
+### 에러 메시지
+
+```
+Uncaught Error
+_ExpoSecureStore.default.getValueWithKeyAsync is not a function
+store/authStore.ts (32:37)
+```
+
+### 원인
+
+`expo-secure-store`는 iOS Keychain·Android Keystore 같은 OS 네이티브 보안 저장소를 사용하는 모듈이다. 브라우저에는 그런 기능이 없어서, Expo 웹에서 실행하면 해당 네이티브 모듈이 아예 존재하지 않아 호출 시점에 에러가 난다.
+
+### 해결
+
+`lib/storage.ts`를 신규 작성해 `Platform.OS`로 분기 — 웹이면 `localStorage`, 네이티브면 `expo-secure-store`를 사용하도록 했다. `authStore.ts`는 이 래퍼만 호출하므로 플랫폼 분기 로직을 알 필요가 없다.
+
+### 교훈
+
+Expo 패키지 중 일부는 특정 플랫폼(네이티브)에서만 동작한다. 지금까지 전부 Expo 웹으로 테스트해온 프로젝트라 이번에 처음 걸렸다. 새 네이티브 전용 패키지를 추가할 때는 웹 호환 여부를 먼저 확인하거나, 플랫폼 분기 래퍼를 기본으로 고려해야 한다.
+
+---
+
+## 2026-06-21 | Google OAuth — code_challenge_method 파라미터 거부
+
+### 에러 메시지
+
+```
+액세스 차단됨: 승인 오류
+Parameter not allowed for this message type: code_challenge_method
+400 오류: invalid_request
+```
+
+### 원인
+
+`expo-auth-session`은 기본적으로 PKCE(`code_challenge`, `code_challenge_method`) 파라미터를 자동으로 요청에 포함한다. PKCE는 Authorization Code 방식(코드를 받은 뒤 토큰으로 교환하는 흐름)에서만 쓰는 보안 장치인데, 이 프로젝트는 `responseType: IdToken`(Google이 즉시 id_token을 발급하는 방식)을 사용하므로 교환 단계가 없어 PKCE 파라미터가 들어갈 자리가 없다. Google이 이 조합을 거부했다.
+
+### 해결
+
+`useAuthRequest` 설정에 `usePKCE: false`를 추가해 PKCE 파라미터 생성을 막았다.
+
+```typescript
+AuthSession.useAuthRequest(
+  {
+    responseType: AuthSession.ResponseType.IdToken,
+    usePKCE: false,
+    // ...
+  },
+  discovery
+);
+```
+
+### 교훈
+
+라이브러리의 기본값이 항상 지금 쓰려는 방식과 맞는 건 아니다. OAuth처럼 여러 흐름(flow)이 있는 영역에서는 라이브러리가 어떤 흐름을 기본으로 가정하는지 확인하고, 다른 흐름을 쓸 때는 충돌하는 기본 옵션을 명시적으로 꺼야 한다.
+
+---
+
+## 2026-06-21 | roomi-api .env — NextAuth 관련 환경변수 누락으로 서버 기동 실패
+
+### 에러 메시지
+
+```
+❌ 환경변수 검증 실패:
+{
+  "NEXTAUTH_SECRET": { "_errors": ["Invalid input: expected string, received undefined"] },
+  "NEXTAUTH_URL": { "_errors": ["Invalid input: expected string, received undefined"] },
+  "GOOGLE_CLIENT_ID": { "_errors": ["Invalid input: expected string, received undefined"] },
+  ...
+}
+```
+
+### 원인
+
+`roomi-api-server` worktree의 `.env`에 `DATABASE_URL`, `MOBILE_JWT_SECRET` 두 값만 있고, `lib/env.ts`가 필수로 요구하는 NextAuth 관련 8개 값(`NEXTAUTH_SECRET`, `NEXTAUTH_URL`, Google·카카오·네이버 클라이언트 ID/시크릿)이 전부 빠져 있었다. 모바일 Google 로그인 라우트 자체는 이 값들을 쓰지 않지만, 환경변수 검증이 서버 시작 시점에 전체를 한 번에 검사하므로 무관한 값이 없어도 서버 전체가 기동하지 않았다.
+
+### 해결
+
+당장 테스트할 범위(모바일 Google 로그인)와 무관한 값은 더미 문자열로, `NEXTAUTH_SECRET`만 `openssl rand -base64 32`로 생성한 실제 랜덤 값으로 채워 서버를 정상 기동시켰다. 카카오·네이버·웹 Google 로그인은 더미 값이라 당장 동작하지 않으나, 오늘 작업 범위 밖이라 문제 없음.
+
+### 교훈
+
+환경변수 검증을 "전부 필수"로 짜두면, 지금 작업과 무관한 값이 하나라도 비어 있으면 서버 전체가 막힌다. 부분 기능만 테스트하고 싶을 때도 전체 스키마를 만족시켜야 한다는 점을 미리 인지하고 있어야 한다.
+
+---
+
+## 2026-06-21 | 새 라우트 파일 추가 후 Unmatched Route
+
+### 에러 메시지
+
+```
+Unmatched Route
+Page could not be found.
+http://localhost:8081/booking/cmq9a1hu00027h05302wgyfcx
+```
+
+### 원인
+
+`app/booking/[roomId].tsx`를 신규 생성한 뒤, 이미 켜져 있던 Expo 개발 서버가 새 동적 라우트 폴더를 핫리로드로 인식하지 못했다. 파일은 정확한 위치에 정확한 이름으로 존재했으나 서버의 라우트 테이블이 갱신되지 않은 상태였다.
+
+### 해결
+
+개발 서버를 완전히 종료하고 캐시를 지운 채 재시작.
+
+```bash
+npx expo start -c
+```
+
+### 교훈
+
+기존 파일 수정은 핫리로드로 바로 반영되지만, 새 폴더·새 동적 라우트처럼 라우트 구조 자체가 바뀌는 변경은 서버 재시작이 필요할 수 있다. "파일은 있는데 라우트를 못 찾는다"는 에러를 만나면 코드보다 먼저 서버 재시작을 의심해본다.
+
+---
+
+## 2026-06-21 | NativeWind `disabled:` 변형이 웹에서 시각적으로 적용 안 됨
+
+### 증상
+
+`Pressable`에 `disabled={isCancelled}`와 `className="... disabled:opacity-40"`을 같이 줬는데, 실제로 비활성 상태인 항목의 버튼이 활성 상태와 똑같은 색으로 보임(클릭은 안 되지만 시각적으로 구분이 안 됨). 에러 메시지는 없음 — 조용히 스타일만 안 먹힌 경우.
+
+### 원인
+
+`Pressable`은 웹에서 `<div role="button">`으로 렌더링된다. `disabled:` 같은 NativeWind 상태 변형은 실제 HTML `disabled` 속성이 존재하는 요소(`<button>`, `<input>` 등)에 한정해서 동작하는데, `<div>`엔 `disabled` 속성 자체가 없어서 그 스타일 규칙이 걸릴 대상이 없다.
+
+### 해결
+
+상태 변형에 의존하지 않고, 조건에 따라 className 문자열을 직접 분기.
+
+```tsx
+className={`... ${isCancelled || isPending ? "bg-red-300" : "bg-red-500"}`}
+```
+
+### 교훈
+
+`disabled:`, `hover:`처럼 HTML 표준 상태 기반 CSS 선택자에 의존하는 스타일 변형은, React Native 컴포넌트가 웹에서 어떤 HTML 태그로 렌더링되는지에 따라 동작 여부가 달라진다. 네이티브(`Pressable`)와 웹 표준 폼 요소는 같은 "버튼처럼 보이는 것"이라도 내부 구현이 다르다는 점을 염두에 둬야 한다.
+
+---
+
+## 2026-06-21 | 하트 버튼이 카드 이동 Link 안에 중첩되어 탭하면 상세로 이동
+
+### 증상
+
+홈 화면 카드 우상단의 하트(`WishlistButton`)를 눌러도 찜 토글이 아니라 카드 전체를 누른 것처럼 상세 화면으로 이동해버림. `WishlistButton`의 `onPress`에 `event.stopPropagation()`을 넣었지만 증상이 그대로 재현됨.
+
+### 원인
+
+`WishlistButton`이 `AccommodationCard` 내부에 있었고, `AccommodationCard`는 다시 `Link`(`asChild`) → `Pressable`로 감싸여 있어 하트 버튼이 "이동 영역 안에 중첩"된 구조였다. 웹에서 `Link`는 실제 `<a href>` 태그로 렌더링되는데, 앵커 태그의 기본 이동 동작은 일반적인 이벤트 버블링 차단(`stopPropagation`)만으로는 막히지 않는 경우가 있다.
+
+### 해결
+
+중첩을 없애고 형제 구조로 변경. `AccommodationCard`에서 `WishlistButton`을 제거하고, 카드를 사용하는 화면(`(tabs)/index.tsx`, `(tabs)/wishlist.tsx`)에서 `Link`(이동)와 `WishlistButton`(찜)을 같은 부모 `View` 안에 나란히(형제로) 배치, `WishlistButton`은 `position: absolute`로 시각적으로만 겹치게 했다.
+
+```tsx
+<View className="relative">
+  <Link href={...} asChild>
+    <Pressable>{/* 카드 내용 */}</Pressable>
+  </Link>
+  <View className="absolute right-2 top-2">
+    <WishlistButton accommodationId={...} />
+  </View>
+</View>
+```
+
+### 교훈
+
+터치 가능 요소를 다른 터치 가능 요소 안에 중첩시키면, 이벤트 버블링 차단(`stopPropagation`)으로 항상 해결되는 게 아니다(특히 웹에서 `<a>` 태그처럼 자체 기본 동작이 있는 요소). 가장 안전한 해결은 처음부터 중첩을 피하고, `position: absolute`로 시각적으로만 겹치는 형제 구조로 설계하는 것이다.
+
+---

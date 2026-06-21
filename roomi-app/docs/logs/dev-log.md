@@ -242,3 +242,146 @@ Expo 웹에서 최종 확인 중 "데이터를 불러오지 못했습니다" 발
 ### 다음
 
 1. Phase 12 구현 착수 (다음 세션 — 야간 또는 주말 가능), `phase12-auth.md` 설계 그대로
+
+---
+
+## 260621 — Phase 12 프론트(인증) 전체 완료
+
+### Phase 12 프론트 완료 ✅
+
+| 파일 | 내용 |
+|---|---|
+| `types/index.ts` | `User` 타입 추가 |
+| `lib/env.ts` | `GOOGLE_CLIENT_ID` 환경변수 검증 추가 |
+| `store/authStore.ts` | 신규 — Zustand 인증 상태(`token`, `user`, `isLoggedIn`), 첫 Zustand 사용 |
+| `lib/storage.ts` | 신규 — 플랫폼별 저장소 분기(웹: `localStorage`, 네이티브: `expo-secure-store`) |
+| `lib/api.ts` | `loginWithGoogle()` 추가, 기존 함수에 토큰 헤더 자동 첨부 |
+| `app/_layout.tsx` | 앱 시작 시 저장된 로그인 복원, `login` 라우트 등록 |
+| `app/login.tsx` | 신규 — `expo-auth-session` 기반 Google 로그인 화면 |
+
+### 외부 설정
+
+- Google Cloud Console에 신규 프로젝트(`roomi-mobile`) 생성, OAuth 동의 화면 설정, 웹 애플리케이션 타입 OAuth 클라이언트 ID 발급, 테스트 사용자 등록 완료
+
+### 에러 3건 해결 (상세는 error-log.md 참고)
+
+1. `expo-secure-store`가 웹에서 동작하지 않는 문제 → `lib/storage.ts`로 플랫폼 분기
+2. Google OAuth `code_challenge_method` 파라미터 거부 → `usePKCE: false` 설정
+3. 백엔드(`roomi-api`) `.env`에 NextAuth 관련 환경변수 누락으로 서버 기동 실패 → 환경변수 추가로 해결
+
+### 최종 검증
+
+- 브라우저 `localStorage`에 `token`(JWT), `user`(DB 데이터) 정상 저장 확인
+- 새로고침 후에도 로그인 상태 유지 확인
+
+**Phase 12 전체(백엔드+프론트) 완료**
+
+### 다음
+
+1. 예약(객실 선택 → 예약 생성 화면)
+2. 내 예약(목록·취소), 찜하기
+3. 필터/검색, 디자인 통일은 진행 상황 보고 결정
+
+---
+
+## 260621 — Phase 13 예약(객실 선택 → 예약 생성) 완료
+
+### Phase 13 완료 ✅
+
+| 파일 | 내용 |
+|---|---|
+| `docs/features/phase13-booking.md` | 기능 정의 문서 |
+| `types/index.ts` | `Booking` 타입 추가 |
+| `lib/api.ts` | `createBooking()` 추가 |
+| `app/accommodation/[id].tsx` | 객실 항목에 "예약하기" 버튼 추가, `/booking/[roomId]`로 이동 |
+| `app/booking/[roomId].tsx` | 신규 — 예약 생성 화면 |
+
+### 기술 결정
+
+- 날짜 선택 UI를 텍스트 직접 입력에서 `react-native-calendars`의 캘린더 클릭 방식으로 변경(사용자 요청) — 체크인/체크아웃을 두 번의 탭으로 선택, `markingType="period"`로 선택 범위를 시각적으로 표시
+- 인원수만 React Hook Form + Zod로 검증, 날짜는 캘린더 선택 상태(`useState`)로 별도 관리
+- 객실 단건 조회 API가 없어 상세 화면이 가진 객실 정보(이름·가격·최대인원)를 라우트 쿼리 파라미터로 전달
+
+### 검증
+
+- 실제 예약 생성 후 `npx prisma studio`로 `Booking` 테이블에 행 생성 확인
+
+### 다음
+
+1. 내 예약(목록·취소)
+2. 찜하기
+3. 필터/검색, 디자인 통일은 진행 상황 보고 결정
+
+---
+
+## 260621 — Phase 14 내 예약(목록·취소) 완료
+
+### Phase 14 완료 ✅
+
+| 파일 | 내용 |
+|---|---|
+| `docs/features/phase14-my-bookings.md` | 기능 정의 문서 |
+| `types/index.ts` | `BookingWithDetails` 추가 |
+| `lib/api.ts` | `getBookings()`, `cancelBooking()` 추가 |
+| `hooks/useMyBookings.ts` | 신규 |
+| `app/(tabs)/my-bookings.tsx` | 신규(기존 미사용 `explore.tsx` 대체) |
+| `app/(tabs)/_layout.tsx` | 탭 이름·아이콘 변경 |
+| `components/ui/icon-symbol.tsx` | 아이콘 매핑에 `calendar` 추가 |
+| `app/booking/[roomId].tsx` | 예약 성공 후 이동 경로를 내 예약 화면으로 변경 |
+
+### 기술 결정
+
+- 취소 버튼은 `useMutation`(첫 사용) + `queryClient.invalidateQueries`로 처리 — 취소 성공 시 목록 쿼리를 무효화해 자동 재조회
+- `useMutation`을 쓰는 행(`BookingRow`)을 별도 컴포넌트로 분리 — `FlatList`의 `renderItem` 콜백 안에서 훅을 직접 호출할 수 없어서
+
+### 에러 1건 해결 — NativeWind `disabled:` 변형이 웹에서 적용 안 됨
+
+`Pressable`이 웹에서 `<div>`로 렌더링되어 `disabled:opacity-40` 같은 스타일이 적용되지 않음(`disabled` HTML 속성이 없는 요소라 셀렉터가 안 걸림). 상태에 따라 className을 직접 분기하는 방식으로 수정. 상세: error-log.md 참고
+
+### 검증
+
+- 예약 생성 → 내 예약 탭에 목록 표시 확인
+- 취소 버튼 클릭 → 상태가 "취소됨"으로 즉시 바뀌고 버튼 비활성 스타일 적용 확인
+
+**Phase 14 완료**
+
+### 다음
+
+1. 찜하기
+2. 필터/검색, 디자인 통일은 진행 상황 보고 결정
+
+---
+
+## 260621 — Phase 15 찜하기 완료
+
+### Phase 15 완료 ✅
+
+| 파일 | 내용 |
+|---|---|
+| `docs/features/phase15-wishlist.md` | 기능 정의 문서 |
+| `types/index.ts` | `Wishlist` 타입 추가 |
+| `lib/api.ts` | `getWishlists()`, `addWishlist()`, `removeWishlist()` 추가 |
+| `hooks/useWishlists.ts` | 신규 |
+| `components/WishlistButton.tsx` | 신규 — 하트 토글 버튼 |
+| `app/(tabs)/index.tsx`, `app/accommodation/[id].tsx`, `app/(tabs)/wishlist.tsx` | 하트 버튼 배치 |
+| `app/(tabs)/_layout.tsx`, `components/ui/icon-symbol.tsx` | "찜 목록" 탭 추가 |
+
+### 기술 결정
+
+- 숙소가 찜됐는지 여부는 별도 API 필드 없이, 찜 목록 전체를 캐시(`useWishlists`)에서 `some()`으로 확인하는 방식 채택 — TanStack Query 캐시 공유로 중복 호출 방지
+- `useWishlists()`에 `enabled: isLoggedIn` 적용 — 비로그인 상태에서 카드마다 불필요한 401 요청 방지
+
+### 에러 1건 해결 — 하트 버튼이 카드 이동(Link) 안에 중첩되어 탭 시 상세로 이동해버림
+
+처음에 하트 버튼을 카드 이동 영역(`Link`→`Pressable`) **안에** 배치해서, 하트를 눌러도 상세 화면으로 함께 이동하는 문제가 있었음(`event.stopPropagation()`으로도 해결 안 됨 — 웹에서 `Link`가 `<a>` 태그로 렌더링되어 기본 이동 동작까지 막아야 했음). 구조를 바꿔서 하트 버튼을 이동 영역의 **형제(sibling)**로 분리(`AccommodationCard`에서 버튼 제거 → 호출하는 화면에서 `View` 하나로 감싸고 `Link`와 `WishlistButton`을 나란히 배치) — 홈 화면, 찜 목록 화면 둘 다 동일하게 적용. 상세: error-log.md 참고
+
+### 검증
+
+- 홈/상세/찜 목록 화면에서 하트 토글이 서로 동기화되어 반영됨 확인
+- 하트 클릭 시 상세 이동 없이 찜 추가/제거만 동작함 확인
+
+**Phase 15 완료 — 핵심 플로우(인증→예약→내예약→찜하기) 전체 완료**
+
+### 다음
+
+1. 필터/검색, 디자인 통일은 진행 상황 보고 결정
