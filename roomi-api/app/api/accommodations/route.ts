@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
   const [accommodations, total] = await Promise.all([
     prisma.accommodation.findMany({
       where,
-      orderBy: { [sort]: "asc" },
+      orderBy: { [sort]: sort === "rating" ? "desc" : "asc" },
       take: limit,
       skip,
     }),

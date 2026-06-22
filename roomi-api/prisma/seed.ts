@@ -11,6 +11,13 @@ const basePrices: Record<string, number> = {
   resort: 300000,
 };
 
+const colorsByType: Record<string, string> = {
+  hotel: "3b82f6/ffffff",
+  motel: "f97316/ffffff",
+  pension: "22c55e/ffffff",
+  resort: "06b6d4/ffffff",
+};
+
 async function main() {
   for (const type of types) {
     for (let i = 1; i <= 12; i++) {
@@ -28,7 +35,13 @@ async function main() {
           currentPrice,
           priceChangeRate,
           rating: 4.0,
+          images: [],
         },
+      });
+
+      await prisma.accommodation.update({
+        where: { id: acc.id },
+        data: { images: [`https://placehold.co/600x400/${colorsByType[type]}.png`] },
       });
 
       await prisma.room.createMany({
