@@ -409,3 +409,40 @@ Expo 웹에서 최종 확인 중 "데이터를 불러오지 못했습니다" 발
 - 날짜(체크인/체크아웃) 가용성 필터의 "제외 동작"(겹치는 예약이 있으면 숙소가 목록에서 빠지는 것)은 **시각적으로 확인하지 못함** — 시드 데이터의 모든 숙소가 객실을 2개씩 갖고 있어서, 한 객실만 예약된 상태로는 다른 객실이 항상 비어있어 숙소가 절대 안 사라짐(필터 로직상 정상 동작이지만 이 데이터로는 입증할 시나리오 자체가 없음)
 - 대안으로 같은 숙소의 두 번째 객실에 임시 예약을 추가해 완전히 막아보는 방법을 검토했으나, Prisma Studio 관계 탐색이 복잡해서 보류 — 대신 다음 근거로 논리적 검증 처리: (1) `region`/`guests` 단독 필터는 Phase 7에서 `curl`로 이미 실제 검증됨 (2) 날짜 겹침 조건(`bookings.none`+`gte`/`lt`/`gt`)은 이미 검증된 것과 동일한 Prisma 관계 필터 패턴을 객실 하위 관계에 적용한 것 (3) `checkIn` 단독 전송 시 `400` 검증 로직은 동작 확인됨
 - 결론: 코드 리뷰 + 부분 동작 확인으로 충분하다고 판단, Phase 16 완료로 처리. 시간 여유가 생기면 임시 예약으로 완전 검증하는 걸 과제로 남김
+
+---
+
+## 260622 — Phase 17 디자인 통일 착수
+
+### Phase 17 설계 완료
+
+- `docs/features/phase17-design-unification.md` 작성 완료
+- 조사 결과: `AccommodationCard`/`PriceChangeBadge`/숙소 상세 화면이 Phase 9 뼈대 그대로 거의 스타일 없는 상태였음을 확인(기능은 완성됐지만 디자인은 처음부터 입힌 적이 없었음)
+- 가격(취소선 평소가+현재가)+변동률 배지 레이아웃이 카드·상세·찜목록 3곳에서 동일하게 반복 — 공유 컴포넌트(`PriceBlock`)로 추출 결정
+- `disabled:opacity-50` 버그(웹에서 `Pressable`이 `<div>`로 렌더링되어 안 먹힘)가 `login.tsx`/`booking/[roomId].tsx`에 아직 남아있는 것 확인 — 이번에 같이 수정
+- 오늘 한정 Claude 직접 작성 모드 유지(사용자 명시 요청) — [[feedback_exception_isolation]] 원칙에 따라 작성 직후 설명 + study-log 기록은 별도로 반드시 챙길 것
+
+### Phase 17 구현 완료 — 디자인 통일
+
+- `PriceBlock.tsx`(신규, 가격+배지 공유 컴포넌트), `PriceChangeBadge.tsx`(패딩·모서리·텍스트 색 추가), `AccommodationCard.tsx`(카드 컨테이너 스타일 재작성), `app/accommodation/[id].tsx`/`app/(tabs)/wishlist.tsx`(`PriceBlock` 적용), `app/login.tsx`/`app/booking/[roomId].tsx`(`disabled:opacity-50` 버그 수정), `components/SearchBar.tsx`/`app/booking/[roomId].tsx`(입력창 모서리 `rounded` → `rounded-lg` 통일) 전부 작성
+- `npx tsc --noEmit --watch`로 작업 중 실시간 점검(사용자 요청), Expo 웹에서 홈/상세/찜목록/내예약 화면 스타일 정상 확인
+
+### 기능 누락 발견 — 로그아웃 버튼이 화면 어디에도 없었음 (사용자 지적)
+
+- 사용자가 로그인 화면 확인을 요청하다가 "로그아웃은 어디서 하냐"고 질문 → PRD 6.5 마이페이지(US-16, US-17, 흐름도에 "로그아웃" 명시)를 다시 확인한 결과, `authStore.ts`의 `logout()`은 Phase 12부터 있었지만 이걸 호출하는 UI 버튼이 어느 화면에도 없었던 걸 발견
+- 사용자가 야놀자 앱 참고 화면(하단 탭: 지역/내주변/홈/찜/마이 — 찜과 마이가 별도 탭) 제시 → "마이" 탭을 4번째로 신규 추가하는 방향으로 결정
+- `components/ui/icon-symbol.tsx`(`person.fill` 매핑 추가), `app/(tabs)/mypage.tsx`(신규 — 로그인 정보 표시 + 로그아웃), `app/(tabs)/_layout.tsx`(탭 추가) 작성
+
+### 에러 1건 해결 — `Alert.alert()`가 웹에서 버튼 눌러도 반응 없음
+
+`Alert.alert()`는 네이티브 전용 시스템 다이얼로그라 웹(react-native-web)에서는 다이얼로그 자체가 안 뜨고 에러도 없이 조용히 무시됨(`expo-secure-store`, `disabled:` 패턴과 같은 종류의 "네이티브 전용 API" 문제). `Platform.OS === "web"`으로 분기해서 웹은 `window.confirm()`을 쓰도록 수정, 실제 로그아웃 처리(`doLogout`)는 함수로 분리해서 양쪽에서 재사용. 상세는 `docs/log/study-log.md` 260622 항목 참고
+
+### 검증 완료
+- 마이 탭에서 로그인 정보 표시, 로그아웃 → 로그인 화면 이동까지 실제 동작 확인
+
+**Phase 17 완료 — 디자인 통일 + 로그아웃 기능 누락 보완**
+
+### 다음
+1. 마감 2026-06-24, 남은 가용일 23·24
+2. 평소 학습 사이클로 복귀(2026-06-21·22는 범위 한정 예외)
+3. 시간 남으면: 카카오·네이버 모바일 로그인, 날짜 가용성 필터 완전 검증
