@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { View, Text, TextInput, Pressable, Alert } from "react-native";
+import { View, Text, TextInput, Alert } from "react-native";
 import { useLocalSearchParams, Stack, router } from "expo-router";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -7,6 +7,7 @@ import { z } from "zod";
 import { Calendar, DateData } from "react-native-calendars";
 import { createBooking } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
+import { GradientButton } from "@/components/GradientButton";
 
 const GuestsFormSchema = z.object({
   guests: z.coerce.number().int().min(1, "1명 이상이어야 합니다"),
@@ -56,11 +57,11 @@ export default function BookingScreen() {
   const markedDates =
     checkIn && checkOut
       ? {
-          [checkIn]: { startingDay: true, color: "#3b82f6", textColor: "white" },
-          [checkOut]: { endingDay: true, color: "#3b82f6", textColor: "white" },
+          [checkIn]: { startingDay: true, color: "#0ea5e9", textColor: "white" },
+          [checkOut]: { endingDay: true, color: "#0ea5e9", textColor: "white" },
         }
       : checkIn
-        ? { [checkIn]: { startingDay: true, endingDay: true, color: "#3b82f6", textColor: "white" } }
+        ? { [checkIn]: { startingDay: true, endingDay: true, color: "#0ea5e9", textColor: "white" } }
         : {};
 
   const onSubmit = async (values: GuestsFormValues) => {
@@ -116,13 +117,12 @@ export default function BookingScreen() {
       />
       {errors.guests && <Text className="mb-2 text-red-500">{errors.guests.message}</Text>}
 
-      <Pressable
+      <GradientButton
+        label={isSubmitting ? "예약 중..." : "예약하기"}
         disabled={isSubmitting}
         onPress={handleSubmit(onSubmit)}
-        className={`mt-6 min-h-11 items-center justify-center rounded-lg bg-blue-500 ${isSubmitting ? "opacity-50" : ""}`}
-      >
-        <Text className="font-semibold text-white">{isSubmitting ? "예약 중..." : "예약하기"}</Text>
-      </Pressable>
+        className="mt-6"
+      />
     </View>
   );
 }

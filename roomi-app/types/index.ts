@@ -57,7 +57,7 @@ export type Wishlist = {
 export type AccommodationFilters = {
   page?: number;
   type?: Accommodation["type"];
-  sort?: "priceChangeRate" | "currentPrice";
+  sort?: "priceChangeRate" | "currentPrice" | "rating";
   region?: string;
   checkIn?: string;
   checkOut?: string;

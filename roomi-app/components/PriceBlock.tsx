@@ -11,8 +11,10 @@ export function PriceBlock({ normalPrice, currentPrice, priceChangeRate }: Price
   return (
     <View className="flex-row items-center gap-2">
       <PriceChangeBadge rate={priceChangeRate} />
-      <Text className="text-gray-400 line-through">{normalPrice.toLocaleString()}원</Text>
-      <Text className="font-bold">{currentPrice.toLocaleString()}원</Text>
+      <View>
+        <Text className="text-gray-400 line-through">{normalPrice.toLocaleString()}원</Text>
+        <Text className="text-base font-bold">{currentPrice.toLocaleString()}원</Text>
+      </View>
     </View>
   );
 }

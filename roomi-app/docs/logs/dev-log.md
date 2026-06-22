@@ -442,7 +442,55 @@ Expo 웹에서 최종 확인 중 "데이터를 불러오지 못했습니다" 발
 
 **Phase 17 완료 — 디자인 통일 + 로그아웃 기능 누락 보완**
 
+---
+
+## 260622 — Phase 18 홈 화면 레이아웃 재구성 (야놀자 참고) + PRD 대조 사건
+
+### PRD 위반 발견 — 사용자 지적
+
+Phase 18 진행 중 사용자가 "검색하면 메인화면이 그대로 나온다"는 게 이상하다고 지적 → PRD를 다시 펼쳐 대조한 결과, PRD 7.1·8.2·8.3에 "홈 → 검색 결과(별도 화면) → 상세"가 명확히 적혀 있었는데 그걸 확인 안 하고 홈 화면 자체가 필터링되는 구조로 임의 설계했던 것을 발견. PRD 전체를 다시 대조해서 추가로 발견한 차이:
+- 정렬 옵션에 "평점 높은순" 빠짐(PRD는 3가지: 가격변동률/현재가격/평점)
+- 예약 취소에 확인 모달 없음(PRD 8.4, US-13 "확인 모달 필수")
+- 추천 캐로셀 6개 vs 구현 5개(F-002)
+- 필터(하단시트→아이콘행), 페이지네이션(이전/다음→무한스크롤), 홈 화면 범위(검색바+추천만→카테고리+정렬+전체목록까지) — 이 3개는 오늘 사용자가 야놀자 참고로 명시적으로 정한 방향이라 PRD를 v10으로 개정하는 쪽으로 결정(코드 유지). 사용자가 PRD 개정 지시문은 직접 별도 도구(웹)에 맡기기로 함
+
+### Phase 18 구현 — 레이아웃 재구성
+
+- `app/search-results.tsx` 신규 — 검색 결과 전용 화면(캐로셀·카테고리 없이 목록+정렬만), `SearchBar`의 검색 버튼이 `router.push({pathname:"/search-results", params:{...}})`로 이동하도록 변경
+- `app/(tabs)/index.tsx` 재구성 — GNB(로고+검색버튼+돋보기 아이콘) → 캐로셀("베스트 딜") → 카테고리 아이콘 → 정렬 → 2열 그리드(무한스크롤)
+- `components/CategoryIcons.tsx` 신규(`FilterSheet.tsx` 대체, 삭제), `components/Pagination.tsx`도 무한스크롤 도입으로 삭제
+- `hooks/useAccommodations.ts`를 `useInfiniteQuery`로 전환
+
+### 디자인 반복 수정 (사용자 피드백 다수, 한 번에 정리)
+
+- 카테고리 아이콘 "전체" 이모지 교체, 크기 조정 2회, 선택 시 배경색 제거(텍스트만 강조)로 최종 정리
+- 정렬 탭을 박스形 → 텍스트 전용(세그먼트 컨트롤 시도 후 최종 텍스트만)으로 단순화, 색상도 파란색→검은색
+- `disabled:` 패턴과 같은 종류의 신규 버그: 검색 모달 X 버튼이 부모의 기본 `alignItems: stretch`로 풀폭 늘어나 포커스 테두리가 화면 너비만큼 길게 보임 → `self-start`로 해결
+- 메인 컬러를 `blue-500`(할인 배지와 색 겹침)에서 `sky-500`로 전체 교체(로고, 링크, 그라데이션 버튼, 선택 상태, 캘린더 선택색 등) — 할인 배지(`PriceChangeBadge`)의 `blue-500`은 의미 색상이라 그대로 유지
+- 전체 주요 버튼에 그라데이션 적용(`components/GradientButton.tsx` 신규, `expo-linear-gradient` 설치) — 이후 로그인 유도 버튼들은 "어떤 방식으로 로그인할지 모른다"는 지적으로 `components/GoogleButton.tsx`(흰 배경+Google 브랜드 색 G 아이콘)로 재교체
+- 화면 배경 회색 문제: `@react-navigation` `DefaultTheme.colors.background`가 옅은 회색 — `app/(tabs)/_layout.tsx`의 `sceneStyle`에 흰 배경 지정으로 일괄 해결
+- 캐로셀(`AccommodationCarousel.tsx`) 대대적 재작업 — ① 가로 스크롤 카드 여러 개 나열(1차) → ② "1개씩만, 자동 전환 4초+좌우 버튼" 요청으로 배너형 단일 카드 구조로 전환 → ③ "Steam 스타일 아니라 야놀자 배너처럼 이미지 꽉 채우고 텍스트 오버레이" 요청으로 풀블리드 배너 디자인으로 재작업 → ④ 카테고리/정렬 바꿀 때 캐로셀이 같이 깜빡이는 버그(매번 새 배열·새 엘리먼트 생성이 원인) → `useMemo`로 고정해 해결 → ⑤ 전환 효과 슬라이드(`translateX`) 시도했으나 "부자연스럽다"는 피드백으로 페이드(`opacity`)로 최종 정리
+- 버그 2건: `Animated.View`에 NativeWind `className`(높이 등)이 안 먹혀서 레이아웃 찌그러짐 → 일반 `View`로 레이아웃 분리, `Animated.View`는 `style`로 애니메이션 값만; 캐로셀 이미지 박스에 준 `px-4`가 같은 엘리먼트의 배경색과 겹쳐 양옆에 회색 띠로 보임 → 패딩을 바깥 래퍼로 분리
+
+### PRD 누락 사항 보완 (실제 기능, Phase 18과 별개로 처리)
+
+- `feat/api`: `accommodations` 라우트 `orderBy`에 `sort === "rating"`일 때 내림차순(`desc`) 분기 추가(나머지는 `asc` 유지)
+- `components/SortSelector.tsx`/`types/index.ts`: 정렬 옵션에 "평점 높은순"(`rating`) 추가
+- `app/(tabs)/my-bookings.tsx`: 예약 취소 버튼에 확인 모달 추가(`Platform.OS` 분기, `Alert.alert`/`window.confirm` 패턴 재사용)
+- 캐로셀 표시 개수 5 → 6개(F-002 명시값에 맞춤)
+
+### 이미지 추가 — picsum.photos 장애 우회
+
+- 시드 데이터에 이미지가 전혀 없어 카드가 항상 회색 빈 박스였던 것을 발견 → `roomi-api/prisma/backfill-images.ts` 신규(기존 데이터 보존하며 `images` 필드만 업데이트), `seed.ts`도 향후 신규 시드 대비 동기화
+- 1차로 picsum.photos 사용 시도 → 서비스 자체 장애(Cloudflare 522)로 전부 실패, 원인이 우리 코드가 아님을 `curl -sI`로 확인 → `placehold.co`로 교체
+- 2차로 한글 텍스트(숙소명)를 이미지에 새기려다 placehold.co가 한글 폰트 미지원으로 깨짐(`motel 12??`) → 텍스트 없이 숙박 종류별 색상 블록(`hotel`=파랑, `motel`=주황, `pension`=초록, `resort`=시안)으로 최종 정리
+
+### 학습 기록 — 같은 실수 재발 (사용자 강하게 지적)
+
+Phase 18 작업 전체를 끝낸 뒤에야 문서화를 시도하다가 사용자가 "또 몰아서 하지 말라고 했잖냐"고 지적 — [[feedback_exception_isolation]] 정정 이후 같은 날 같은 종류의 실수가 재발한 것. study-log.md에 이번 작업의 핵심 개념(useMemo로 참조 고정, 독립 쿼리 분리, NativeWind와 Animated/서드파티 컴포넌트, Animated.Value 트랜지션, 외부서비스 장애 판별, 시드 재실행 위험성, router params 전달) 전부 사후 기록 완료. 재발 방지책은 메모리에 더 강하게 정정(다음 항목 참고)
+
 ### 다음
 1. 마감 2026-06-24, 남은 가용일 23·24
 2. 평소 학습 사이클로 복귀(2026-06-21·22는 범위 한정 예외)
 3. 시간 남으면: 카카오·네이버 모바일 로그인, 날짜 가용성 필터 완전 검증
+4. PRD v10 갱신은 사용자가 별도로(웹 도구) 진행 — 코드와 PRD가 다시 동기화됐는지 다음 세션 시작 시 확인할 것

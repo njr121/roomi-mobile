@@ -1,10 +1,11 @@
-import { FlatList, Text, View, Pressable } from "react-native";
+import { FlatList, Text, View, Pressable, Alert, Platform } from "react-native";
 import { router } from "expo-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMyBookings } from "@/hooks/useMyBookings";
 import { useAuthStore } from "@/store/authStore";
 import { cancelBooking } from "@/lib/api";
 import { BookingWithDetails } from "@/types";
+import { GoogleButton } from "@/components/GoogleButton";
 
 function BookingRow({ booking }: { booking: BookingWithDetails }) {
   const queryClient = useQueryClient();
@@ -29,7 +30,16 @@ function BookingRow({ booking }: { booking: BookingWithDetails }) {
 
       <Pressable
         disabled={isCancelled || isPending}
-        onPress={() => mutate()}
+        onPress={() => {
+          if (Platform.OS === "web") {
+            if (window.confirm("예약을 취소하시겠습니까?")) mutate();
+            return;
+          }
+          Alert.alert("예약 취소", "예약을 취소하시겠습니까?", [
+            { text: "아니요", style: "cancel" },
+            { text: "취소하기", style: "destructive", onPress: () => mutate() },
+          ]);
+        }}
         className={`mt-2 min-h-11 items-center justify-center rounded-lg ${
           isCancelled || isPending ? "bg-red-300" : "bg-red-500"
         }`}
@@ -48,12 +58,7 @@ export default function MyBookingsScreen() {
     return (
       <View className="flex-1 items-center justify-center px-6">
         <Text className="mb-4">로그인이 필요합니다.</Text>
-        <Pressable
-          onPress={() => router.push("/login")}
-          className="min-h-11 items-center justify-center rounded-lg bg-blue-500 px-6"
-        >
-          <Text className="font-semibold text-white">로그인하기</Text>
-        </Pressable>
+        <GoogleButton onPress={() => router.push("/login")} />
       </View>
     );
   }

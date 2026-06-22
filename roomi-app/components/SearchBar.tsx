@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { View, Text, TextInput, Pressable, Modal } from "react-native";
 import { Calendar, DateData } from "react-native-calendars";
+import { GradientButton } from "./GradientButton";
 
 type SearchValues = {
   region?: string;
@@ -8,6 +9,8 @@ type SearchValues = {
   checkOut?: string;
   guests?: number;
 };
+
+const REGIONS = ["서울", "부산", "인천", "강원", "경주", "제주"];
 
 type SearchBarProps = {
   onSearch: (values: SearchValues) => void;
@@ -19,6 +22,7 @@ export function SearchBar({ onSearch }: SearchBarProps) {
   const [checkIn, setCheckIn] = useState<string | null>(null);
   const [checkOut, setCheckOut] = useState<string | null>(null);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const [isRegionOpen, setIsRegionOpen] = useState(false);
 
   const onDayPress = (day: DateData) => {
     if (!checkIn || (checkIn && checkOut)) {
@@ -37,11 +41,11 @@ export function SearchBar({ onSearch }: SearchBarProps) {
   const markedDates =
     checkIn && checkOut
       ? {
-          [checkIn]: { startingDay: true, color: "#3b82f6", textColor: "white" },
-          [checkOut]: { endingDay: true, color: "#3b82f6", textColor: "white" },
+          [checkIn]: { startingDay: true, color: "#0ea5e9", textColor: "white" },
+          [checkOut]: { endingDay: true, color: "#0ea5e9", textColor: "white" },
         }
       : checkIn
-        ? { [checkIn]: { startingDay: true, endingDay: true, color: "#3b82f6", textColor: "white" } }
+        ? { [checkIn]: { startingDay: true, endingDay: true, color: "#0ea5e9", textColor: "white" } }
         : {};
 
   const handleSearch = () => {
@@ -55,12 +59,12 @@ export function SearchBar({ onSearch }: SearchBarProps) {
 
   return (
     <View className="gap-2 border-b border-gray-200 px-4 py-3">
-      <TextInput
+      <Pressable
         className="rounded-lg border border-gray-300 px-3 py-2"
-        placeholder="지역 (예: 서울)"
-        value={region}
-        onChangeText={setRegion}
-      />
+        onPress={() => setIsRegionOpen(true)}
+      >
+        <Text className={region ? "" : "text-gray-400"}>{region || "지역 선택"}</Text>
+      </Pressable>
 
       <Pressable
         className="rounded-lg border border-gray-300 px-3 py-2"
@@ -79,12 +83,7 @@ export function SearchBar({ onSearch }: SearchBarProps) {
         onChangeText={setGuests}
       />
 
-      <Pressable
-        onPress={handleSearch}
-        className="min-h-11 items-center justify-center rounded-lg bg-blue-500"
-      >
-        <Text className="font-semibold text-white">검색</Text>
-      </Pressable>
+      <GradientButton label="검색" onPress={handleSearch} />
 
       <Modal visible={isCalendarOpen} animationType="slide">
         <View className="flex-1 bg-white px-4 py-10">
@@ -94,13 +93,30 @@ export function SearchBar({ onSearch }: SearchBarProps) {
             markedDates={markedDates}
             onDayPress={onDayPress}
           />
-          <Pressable
-            onPress={() => setIsCalendarOpen(false)}
-            className="mt-6 min-h-11 items-center justify-center rounded-lg bg-blue-500"
-          >
-            <Text className="font-semibold text-white">확인</Text>
-          </Pressable>
+          <GradientButton label="확인" onPress={() => setIsCalendarOpen(false)} className="mt-6" />
         </View>
+      </Modal>
+
+      <Modal visible={isRegionOpen} animationType="slide" transparent onRequestClose={() => setIsRegionOpen(false)}>
+        <Pressable className="flex-1 bg-black/40" onPress={() => setIsRegionOpen(false)}>
+          <View className="mt-auto rounded-t-2xl bg-white px-4 py-6">
+            <Text className="mb-4 text-lg font-bold">지역 선택</Text>
+            {REGIONS.map((option) => (
+              <Pressable
+                key={option}
+                onPress={() => {
+                  setRegion(option);
+                  setIsRegionOpen(false);
+                }}
+                className={`mb-2 min-h-11 items-center justify-center rounded-lg border ${
+                  region === option ? "border-sky-500 bg-sky-50" : "border-gray-300"
+                }`}
+              >
+                <Text>{option}</Text>
+              </Pressable>
+            ))}
+          </View>
+        </Pressable>
       </Modal>
     </View>
   );

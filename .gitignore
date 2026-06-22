@@ -18,4 +18,11 @@ dist/
 
 # Claude Code 개인 설정
 CLAUDE.local.md
-.claude/settings.local.json
+**/.claude/settings.local.json
+
+# roomi-api는 별도 worktree(roomi-api-server/)에서 작업 — 이 폴더는 로컬 설정만 있는 placeholder
+/roomi-api/
+
+# Next.js/TS 빌드 산물 (혹시 다른 위치에 생겨도 차단)
+next-env.d.ts
+tsconfig.tsbuildinfo

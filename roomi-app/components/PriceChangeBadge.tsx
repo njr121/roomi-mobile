@@ -15,8 +15,8 @@ export function PriceChangeBadge({ rate }: PriceChangeBadgeProps) {
   }
 
   return (
-    <View className={`rounded-full px-2 py-0.5 ${bgColor}`}>
-      <Text className="text-xs font-semibold text-white">{`${rate > 0 ? "+" : ""}${rate}%`}</Text>
+    <View className={`rounded-full px-2.5 py-1 ${bgColor}`}>
+      <Text className="text-sm font-bold text-white">{`${rate > 0 ? "+" : ""}${rate}%`}</Text>
     </View>
   );
 }

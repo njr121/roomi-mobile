@@ -1,64 +1,90 @@
-import { useState } from "react";
-import { FlatList, Text, View, Pressable } from "react-native";
-import { Link } from "expo-router";
+import { useMemo, useState } from "react";
+import { FlatList, Text, View, Pressable, Modal } from "react-native";
+import { Link, router } from "expo-router";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { AccommodationCard } from "@/components/AccommodationCard";
+import { AccommodationCarousel } from "@/components/AccommodationCarousel";
 import { WishlistButton } from "@/components/WishlistButton";
 import { SearchBar } from "@/components/SearchBar";
-import { FilterSheet } from "@/components/FilterSheet";
+import { CategoryIcons } from "@/components/CategoryIcons";
 import { SortSelector } from "@/components/SortSelector";
-import { Pagination } from "@/components/Pagination";
 import { useAccommodations } from "@/hooks/useAccommodations";
 import { Accommodation, AccommodationFilters } from "@/types";
 
 export default function HomeScreen() {
   const [filters, setFilters] = useState<AccommodationFilters>({
-    page: 1,
-    sort: "priceChangeRate",
+    sort: "currentPrice",
   });
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
 
-  const { data, isLoading, isError } = useAccommodations(filters);
+  const { data, isLoading, isError, fetchNextPage, hasNextPage, isFetchingNextPage } =
+    useAccommodations(filters);
+
+  const items = data?.pages.flatMap((page) => page.data) ?? [];
+
+  const { data: bestDealsData } = useAccommodations({ sort: "priceChangeRate" });
+  const bestDeals = useMemo(
+    () => bestDealsData?.pages[0]?.data.slice(0, 6) ?? [],
+    [bestDealsData]
+  );
+  const carouselElement = useMemo(() => <AccommodationCarousel data={bestDeals} />, [bestDeals]);
 
   return (
     <View className="flex-1">
-      <SearchBar
-        onSearch={(values) => setFilters((prev) => ({ ...prev, ...values, page: 1 }))}
-      />
-
-      <View className="flex-row items-center justify-between px-4">
-        <SortSelector
-          value={filters.sort ?? "priceChangeRate"}
-          onChange={(sort) => setFilters((prev) => ({ ...prev, sort, page: 1 }))}
-        />
+      <View className="flex-row items-center gap-3 border-b border-gray-200 px-4 py-3">
+        <Text className="text-xl font-bold text-sky-500">Roomi</Text>
         <Pressable
-          onPress={() => setIsFilterOpen(true)}
-          className="min-h-11 items-center justify-center rounded-lg border border-gray-300 px-3"
+          onPress={() => setIsSearchOpen(true)}
+          className="flex-1 min-h-11 flex-row items-center justify-between rounded-lg border border-gray-300 px-3"
         >
-          <Text>숙박 종류</Text>
+          <Text className="text-gray-400">어디로 가시나요?</Text>
+          <MaterialIcons name="search" size={20} color="#9ca3af" />
         </Pressable>
       </View>
 
       {isLoading && <Text className="px-4">불러오는 중...</Text>}
       {isError && <Text className="px-4">데이터를 불러오지 못했습니다.</Text>}
 
-      {data && data.data.length === 0 && (
+      {!isLoading && items.length === 0 && (
         <View className="flex-1 items-center justify-center">
           <Text>검색 결과가 없습니다.</Text>
         </View>
       )}
 
-      {data && data.data.length > 0 && (
+      {items.length > 0 && (
         <FlatList
-          data={data.data}
+          data={items}
           keyExtractor={(item: Accommodation) => item.id}
+          numColumns={2}
+          columnWrapperStyle={{ justifyContent: "space-between", paddingHorizontal: 16 }}
+          ListHeaderComponent={
+            <View>
+              {carouselElement}
+              <CategoryIcons
+                selectedType={filters.type}
+                onSelect={(type) => setFilters((prev) => ({ ...prev, type }))}
+              />
+              <SortSelector
+                value={filters.sort ?? "currentPrice"}
+                onChange={(sort) => setFilters((prev) => ({ ...prev, sort }))}
+              />
+            </View>
+          }
+          onEndReached={() => {
+            if (hasNextPage) fetchNextPage();
+          }}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={
+            isFetchingNextPage ? <Text className="py-4 text-center text-gray-400">불러오는 중...</Text> : null
+          }
           renderItem={({ item }) => (
-            <View className="relative">
+            <View className="relative mb-4 w-[48%]">
               <Link href={`/accommodation/${item.id}`} asChild>
                 <Pressable>
-                  <AccommodationCard accommodation={item} />
+                  <AccommodationCard accommodation={item} variant="grid" />
                 </Pressable>
               </Link>
-              <View className="absolute right-6 top-3">
+              <View className="absolute right-3 top-3">
                 <WishlistButton accommodationId={item.id} />
               </View>
             </View>
@@ -66,21 +92,27 @@ export default function HomeScreen() {
         />
       )}
 
-      {data && (
-        <Pagination
-          page={data.pagination.page}
-          totalPages={data.pagination.totalPages}
-          onPrev={() => setFilters((prev) => ({ ...prev, page: (prev.page ?? 1) - 1 }))}
-          onNext={() => setFilters((prev) => ({ ...prev, page: (prev.page ?? 1) + 1 }))}
-        />
-      )}
-
-      <FilterSheet
-        visible={isFilterOpen}
-        selectedType={filters.type}
-        onSelect={(type) => setFilters((prev) => ({ ...prev, type, page: 1 }))}
-        onClose={() => setIsFilterOpen(false)}
-      />
+      <Modal visible={isSearchOpen} animationType="slide">
+        <View className="flex-1 bg-white pt-3">
+          <Pressable onPress={() => setIsSearchOpen(false)} className="self-start px-4 pb-2">
+            <Text className="text-2xl text-gray-600">✕</Text>
+          </Pressable>
+          <SearchBar
+            onSearch={(values) => {
+              setIsSearchOpen(false);
+              router.push({
+                pathname: "/search-results",
+                params: {
+                  region: values.region ?? "",
+                  checkIn: values.checkIn ?? "",
+                  checkOut: values.checkOut ?? "",
+                  guests: values.guests ? String(values.guests) : "",
+                },
+              });
+            }}
+          />
+        </View>
+      </Modal>
     </View>
   );
 }

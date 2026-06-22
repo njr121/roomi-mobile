@@ -1,6 +1,6 @@
 import { View, Text, Pressable } from "react-native";
 
-type SortValue = "priceChangeRate" | "currentPrice";
+type SortValue = "priceChangeRate" | "currentPrice" | "rating";
 
 type SortSelectorProps = {
   value: SortValue;
@@ -8,22 +8,19 @@ type SortSelectorProps = {
 };
 
 const SORT_OPTIONS: { label: string; value: SortValue }[] = [
-  { label: "변동률 낮은순", value: "priceChangeRate" },
   { label: "가격 낮은순", value: "currentPrice" },
+  { label: "변동률 낮은순", value: "priceChangeRate" },
+  { label: "평점 높은순", value: "rating" },
 ];
 
 export function SortSelector({ value, onChange }: SortSelectorProps) {
   return (
-    <View className="flex-row gap-2 px-4 py-2">
+    <View className="flex-row gap-4 px-4 py-2">
       {SORT_OPTIONS.map((option) => (
-        <Pressable
-          key={option.value}
-          onPress={() => onChange(option.value)}
-          className={`min-h-11 items-center justify-center rounded-lg border px-3 ${
-            value === option.value ? "border-blue-500 bg-blue-50" : "border-gray-300"
-          }`}
-        >
-          <Text>{option.label}</Text>
+        <Pressable key={option.value} onPress={() => onChange(option.value)}>
+          <Text className={`text-sm font-bold ${value === option.value ? "text-black" : "text-gray-500"}`}>
+            {option.label}
+          </Text>
         </Pressable>
       ))}
     </View>

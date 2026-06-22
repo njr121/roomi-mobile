@@ -1,11 +1,12 @@
 import { useEffect } from "react";
-import { View, Text, Pressable } from "react-native";
+import { View, Text } from "react-native";
 import { router } from "expo-router";
 import * as AuthSession from "expo-auth-session";
 import * as WebBrowser from "expo-web-browser";
 import env from "@/lib/env";
 import { loginWithGoogle } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
+import { GoogleButton } from "@/components/GoogleButton";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -43,13 +44,7 @@ export default function LoginScreen() {
   return (
     <View className="flex-1 items-center justify-center bg-white px-6">
       <Text className="mb-8 text-xl font-bold">Roomi 로그인</Text>
-      <Pressable
-        disabled={!request}
-        onPress={() => promptAsync()}
-        className={`rounded-lg bg-blue-500 px-6 py-3 ${!request ? "opacity-50" : ""}`}
-      >
-        <Text className="font-semibold text-white">Google로 로그인</Text>
-      </Pressable>
+      <GoogleButton disabled={!request} onPress={() => promptAsync()} />
       <Text className="mt-4 text-xs text-gray-400">{redirectUri}</Text>
     </View>
   );

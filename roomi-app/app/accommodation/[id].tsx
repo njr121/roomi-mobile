@@ -17,7 +17,7 @@ export default function AccommodationDetailScreen() {
   }
 
   return (
-    <ScrollView className="px-4 py-4">
+    <ScrollView className="bg-white px-4 py-4">
       <Stack.Screen options={{ title: data.name }} />
       <View className="flex-row items-center justify-between">
         <Text className="text-xl font-bold">{data.name}</Text>
@@ -51,7 +51,7 @@ export default function AccommodationDetailScreen() {
           <Text>
             {room.name} · {room.price}원 · 최대 {room.maxGuests}명
           </Text>
-          <Text className="text-blue-500">예약하기</Text>
+          <Text className="text-sky-500">예약하기</Text>
         </Pressable>
       ))}
     </ScrollView>

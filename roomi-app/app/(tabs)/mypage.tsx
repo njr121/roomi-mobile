@@ -1,6 +1,7 @@
 import { View, Text, Pressable, Alert, Platform } from "react-native";
 import { router } from "expo-router";
 import { useAuthStore } from "@/store/authStore";
+import { GoogleButton } from "@/components/GoogleButton";
 
 export default function MyPageScreen() {
   const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
@@ -11,12 +12,7 @@ export default function MyPageScreen() {
     return (
       <View className="flex-1 items-center justify-center px-6">
         <Text className="mb-4">로그인이 필요합니다.</Text>
-        <Pressable
-          onPress={() => router.push("/login")}
-          className="min-h-11 items-center justify-center rounded-lg bg-blue-500 px-6"
-        >
-          <Text className="font-semibold text-white">로그인하기</Text>
-        </Pressable>
+        <GoogleButton onPress={() => router.push("/login")} />
       </View>
     );
   }
