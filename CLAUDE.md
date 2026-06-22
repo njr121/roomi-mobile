@@ -145,12 +145,13 @@
     │   ├── features/
     │   ├── logs/
     │   └── errors/
-    ├── app/                 → Expo Router (app/accommodation/[id].tsx 등 동적 라우트 포함)
+    ├── app/                 → Expo Router (accommodation/[id].tsx, booking/[roomId].tsx 등 동적 라우트 포함)
     ├── components/
-    ├── store/               → Zustand (아직 미사용)
+    ├── store/               → Zustand (authStore — 인증 상태)
     ├── lib/
     │   ├── env.ts
-    │   └── api.ts
+    │   ├── api.ts
+    │   └── storage.ts       → 플랫폼별 저장소 분기(web: localStorage, native: SecureStore)
     ├── hooks/               → TanStack Query 훅
     └── types/
         └── index.ts
