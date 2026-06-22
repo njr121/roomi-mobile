@@ -1,5 +1,4 @@
-import { Pressable, Text } from "react-native";
-import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
+import { Pressable, Text, Image } from "react-native";
 
 type GoogleButtonProps = {
   onPress: () => void;
@@ -16,8 +15,8 @@ export function GoogleButton({ onPress, disabled, className }: GoogleButtonProps
         disabled ? "opacity-50" : ""
       } ${className ?? ""}`}
     >
-      <FontAwesome5 name="google" size={16} color="#4285F4" />
-      <Text className="font-semibold text-gray-700">Google 로그인</Text>
+      <Image source={require("@/assets/images/google-icon.png")} style={{ width: 20, height: 20 }} resizeMode="contain" />
+      <Text className="text-gray-700">Google로 시작하기</Text>
     </Pressable>
   );
 }

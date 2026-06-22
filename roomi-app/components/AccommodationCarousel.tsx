@@ -4,6 +4,7 @@ import { Link } from "expo-router";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { PriceChangeBadge } from "./PriceChangeBadge";
 import { WishlistButton } from "./WishlistButton";
+import { getTypeImage } from "@/lib/typeImages";
 import type { Accommodation } from "@/types";
 
 type AccommodationCarouselProps = {
@@ -40,23 +41,31 @@ export function AccommodationCarousel({ data }: AccommodationCarouselProps) {
       <Text className="mb-2 px-4 text-lg font-bold">베스트 딜</Text>
 
       <View className="px-4">
-      <View className="relative h-48 w-full overflow-hidden rounded-lg bg-gray-200">
-        <Animated.View style={{ flex: 1, opacity }}>
-          <Link href={`/accommodation/${current.id}`} asChild>
-            <Pressable style={{ flex: 1 }}>
-              <Image source={{ uri: current.images[0] }} className="h-full w-full" />
-              <View className="absolute bottom-0 left-0 right-0 bg-black/50 px-4 py-3">
-                <Text className="text-base font-bold text-white">{current.name}</Text>
-                <Text className="mb-1 text-xs text-white/70">{current.location}</Text>
-                <View className="flex-row items-center gap-2">
-                  <PriceChangeBadge rate={current.priceChangeRate} />
-                  <Text className="text-white/60 line-through">{current.normalPrice.toLocaleString()}원</Text>
-                  <Text className="font-bold text-white">{current.currentPrice.toLocaleString()}원</Text>
-                </View>
-              </View>
-            </Pressable>
-          </Link>
+      <View
+        className="relative overflow-hidden rounded-lg bg-gray-200"
+        style={{ height: 192, maxWidth: "100%" }}
+      >
+        <Animated.View style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, opacity }}>
+          <Image
+            source={getTypeImage(current.type, current.id)}
+            resizeMode="cover"
+            style={{ maxWidth: "100%", width: "100%", height: "100%" }}
+          />
         </Animated.View>
+
+        <View className="absolute bottom-0 left-0 right-0 bg-black/50 px-4 py-3">
+          <Text className="text-base font-bold text-white">{current.name}</Text>
+          <Text className="mb-1 text-xs text-white/70">{current.location}</Text>
+          <View className="flex-row items-center gap-2">
+            <PriceChangeBadge rate={current.priceChangeRate} />
+            <Text className="text-white/60 line-through">{current.normalPrice.toLocaleString()}원</Text>
+            <Text className="font-bold text-white">{current.currentPrice.toLocaleString()}원</Text>
+          </View>
+        </View>
+
+        <Link href={`/accommodation/${current.id}`} asChild>
+          <Pressable style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }} />
+        </Link>
 
         <View className="absolute right-3 top-3">
           <WishlistButton accommodationId={current.id} />

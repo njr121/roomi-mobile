@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { View, Text } from "react-native";
+import { View, Text, Alert, Platform } from "react-native";
 import { router } from "expo-router";
 import * as AuthSession from "expo-auth-session";
 import * as WebBrowser from "expo-web-browser";
@@ -7,6 +7,8 @@ import env from "@/lib/env";
 import { loginWithGoogle } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
 import { GoogleButton } from "@/components/GoogleButton";
+import { KakaoButton } from "@/components/KakaoButton";
+import { NaverButton } from "@/components/NaverButton";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -41,11 +43,23 @@ export default function LoginScreen() {
       .then(() => router.replace("/"));
   }, [response]);
 
+  const showComingSoon = (provider: string) => {
+    const message = `${provider} 로그인은 아직 준비 중입니다.`;
+    if (Platform.OS === "web") {
+      window.alert(message);
+      return;
+    }
+    Alert.alert("준비 중", message);
+  };
+
   return (
     <View className="flex-1 items-center justify-center bg-white px-6">
-      <Text className="mb-8 text-xl font-bold">Roomi 로그인</Text>
-      <GoogleButton disabled={!request} onPress={() => promptAsync()} />
-      <Text className="mt-4 text-xs text-gray-400">{redirectUri}</Text>
+      <Text className="mb-8 text-3xl font-bold text-sky-500">Roomi 로그인</Text>
+      <View className="w-full gap-3">
+        <GoogleButton disabled={!request} onPress={() => promptAsync()} />
+        <KakaoButton onPress={() => showComingSoon("Kakao")} />
+        <NaverButton onPress={() => showComingSoon("Naver")} />
+      </View>
     </View>
   );
 }
