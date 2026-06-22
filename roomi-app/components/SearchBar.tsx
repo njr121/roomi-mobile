@@ -56,14 +56,14 @@ export function SearchBar({ onSearch }: SearchBarProps) {
   return (
     <View className="gap-2 border-b border-gray-200 px-4 py-3">
       <TextInput
-        className="rounded border border-gray-300 px-3 py-2"
+        className="rounded-lg border border-gray-300 px-3 py-2"
         placeholder="지역 (예: 서울)"
         value={region}
         onChangeText={setRegion}
       />
 
       <Pressable
-        className="rounded border border-gray-300 px-3 py-2"
+        className="rounded-lg border border-gray-300 px-3 py-2"
         onPress={() => setIsCalendarOpen(true)}
       >
         <Text>
@@ -72,7 +72,7 @@ export function SearchBar({ onSearch }: SearchBarProps) {
       </Pressable>
 
       <TextInput
-        className="rounded border border-gray-300 px-3 py-2"
+        className="rounded-lg border border-gray-300 px-3 py-2"
         placeholder="인원"
         keyboardType="number-pad"
         value={guests}

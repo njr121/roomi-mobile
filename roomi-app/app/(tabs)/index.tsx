@@ -58,7 +58,7 @@ export default function HomeScreen() {
                   <AccommodationCard accommodation={item} />
                 </Pressable>
               </Link>
-              <View className="absolute right-1 top-1">
+              <View className="absolute right-6 top-3">
                 <WishlistButton accommodationId={item.id} />
               </View>
             </View>

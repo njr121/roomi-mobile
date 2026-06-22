@@ -107,7 +107,7 @@ export default function BookingScreen() {
         name="guests"
         render={({ field: { onChange, value } }) => (
           <TextInput
-            className="mb-1 rounded border border-gray-300 px-3 py-2"
+            className="mb-1 rounded-lg border border-gray-300 px-3 py-2"
             keyboardType="number-pad"
             value={String(value)}
             onChangeText={(text) => onChange(Number(text) || 0)}
@@ -119,7 +119,7 @@ export default function BookingScreen() {
       <Pressable
         disabled={isSubmitting}
         onPress={handleSubmit(onSubmit)}
-        className="mt-6 min-h-11 items-center justify-center rounded-lg bg-blue-500 disabled:opacity-50"
+        className={`mt-6 min-h-11 items-center justify-center rounded-lg bg-blue-500 ${isSubmitting ? "opacity-50" : ""}`}
       >
         <Text className="font-semibold text-white">{isSubmitting ? "예약 중..." : "예약하기"}</Text>
       </Pressable>

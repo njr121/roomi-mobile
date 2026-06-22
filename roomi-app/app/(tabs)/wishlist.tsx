@@ -2,7 +2,7 @@ import { FlatList, Text, View, Pressable } from "react-native";
 import { Link, router } from "expo-router";
 import { useWishlists } from "@/hooks/useWishlists";
 import { useAuthStore } from "@/store/authStore";
-import { PriceChangeBadge } from "@/components/PriceChangeBadge";
+import { PriceBlock } from "@/components/PriceBlock";
 import { WishlistButton } from "@/components/WishlistButton";
 
 export default function WishlistScreen() {
@@ -48,10 +48,12 @@ export default function WishlistScreen() {
           <Link href={`/accommodation/${item.accommodationId}`} asChild>
             <Pressable className="min-h-11 border-b border-gray-200 px-4 py-3">
               <Text className="font-bold">{item.accommodation.name}</Text>
-              <Text>{item.accommodation.location}</Text>
-              <Text className="line-through">{item.accommodation.normalPrice}원</Text>
-              <Text>{item.accommodation.currentPrice}원</Text>
-              <PriceChangeBadge rate={item.accommodation.priceChangeRate} />
+              <Text className="mb-1 text-sm text-gray-500">{item.accommodation.location}</Text>
+              <PriceBlock
+                normalPrice={item.accommodation.normalPrice}
+                currentPrice={item.accommodation.currentPrice}
+                priceChangeRate={item.accommodation.priceChangeRate}
+              />
             </Pressable>
           </Link>
           <View className="absolute right-2 top-2">

@@ -1,7 +1,7 @@
 import { ScrollView, Text, View, Pressable } from "react-native";
 import { useLocalSearchParams, Stack, router } from "expo-router";
 import { useAccommodationDetail } from "@/hooks/useAccommodationDetail";
-import { PriceChangeBadge } from "@/components/PriceChangeBadge";
+import { PriceBlock } from "@/components/PriceBlock";
 import { WishlistButton } from "@/components/WishlistButton";
 
 export default function AccommodationDetailScreen() {
@@ -17,18 +17,20 @@ export default function AccommodationDetailScreen() {
   }
 
   return (
-    <ScrollView>
+    <ScrollView className="px-4 py-4">
       <Stack.Screen options={{ title: data.name }} />
       <View className="flex-row items-center justify-between">
-        <Text>{data.name}</Text>
+        <Text className="text-xl font-bold">{data.name}</Text>
         <WishlistButton accommodationId={data.id} />
       </View>
-      <Text>{data.location}</Text>
-      <Text className="line-through">{data.normalPrice}원</Text>
-      <Text>{data.currentPrice}원</Text>
-      <PriceChangeBadge rate={data.priceChangeRate} />
-      <Text>{data.description}</Text>
-      <Text>평점 {data.rating}</Text>
+      <Text className="mb-2 text-sm text-gray-500">{data.location}</Text>
+      <PriceBlock
+        normalPrice={data.normalPrice}
+        currentPrice={data.currentPrice}
+        priceChangeRate={data.priceChangeRate}
+      />
+      <Text className="mt-3 text-gray-700">{data.description}</Text>
+      <Text className="mb-2 mt-1 text-gray-500">평점 {data.rating}</Text>
 
       {data.rooms.map((room) => (
         <Pressable
