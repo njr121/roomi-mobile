@@ -53,3 +53,23 @@ export type Wishlist = {
   createdAt: string;
   accommodation: Accommodation;
 };
+
+export type AccommodationFilters = {
+  page?: number;
+  type?: Accommodation["type"];
+  sort?: "priceChangeRate" | "currentPrice";
+  region?: string;
+  checkIn?: string;
+  checkOut?: string;
+  guests?: number;
+};
+
+export type PaginatedAccommodations = {
+  data: Accommodation[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+};

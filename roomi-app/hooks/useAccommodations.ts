@@ -1,9 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { getAccommodations } from "@/lib/api";
+import { AccommodationFilters } from "@/types";
 
-export function useAccommodations() {
+export function useAccommodations(filters: AccommodationFilters) {
   return useQuery({
-    queryKey: ["accommodations"],
-    queryFn: getAccommodations,
+    queryKey: ["accommodations", filters],
+    queryFn: () => getAccommodations(filters),
   });
 }

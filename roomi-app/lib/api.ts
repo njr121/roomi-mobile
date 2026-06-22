@@ -1,5 +1,13 @@
 import env from "./env";
-import { Accommodation, AccommodationDetail, Booking, BookingWithDetails, User, Wishlist } from "@/types";
+import {
+  AccommodationDetail,
+  AccommodationFilters,
+  Booking,
+  BookingWithDetails,
+  PaginatedAccommodations,
+  User,
+  Wishlist,
+} from "@/types";
 import { useAuthStore } from "@/store/authStore";
 
 function authHeaders(): HeadersInit {
@@ -7,8 +15,15 @@ function authHeaders(): HeadersInit {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
-export async function getAccommodations(): Promise<Accommodation[]> {
-  const response = await fetch(`${env.API_URL}/api/accommodations`, {
+export async function getAccommodations(filters: AccommodationFilters): Promise<PaginatedAccommodations> {
+  const params = new URLSearchParams();
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value !== undefined) {
+      params.set(key, String(value));
+    }
+  });
+
+  const response = await fetch(`${env.API_URL}/api/accommodations?${params.toString()}`, {
     headers: authHeaders(),
   });
   const json = await response.json();
@@ -17,7 +32,7 @@ export async function getAccommodations(): Promise<Accommodation[]> {
     throw new Error(json.error.message);
   }
 
-  return json.data.data;
+  return json.data;
 }
 
 export async function getAccommodationDetail(id: string): Promise<AccommodationDetail> {
