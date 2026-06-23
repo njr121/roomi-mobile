@@ -6,6 +6,7 @@ type AuthState = {
   token: string | null;
   user: User | null;
   isLoggedIn: boolean;
+  isRestoring: boolean;
   login: (token: string, user: User) => Promise<void>;
   logout: () => Promise<void>;
   restore: () => Promise<void>;
@@ -15,6 +16,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   token: null,
   user: null,
   isLoggedIn: false,
+  isRestoring: true,
 
   login: async (token, user) => {
     await Storage.setItem("token", token);
@@ -33,7 +35,9 @@ export const useAuthStore = create<AuthState>((set) => ({
     const userJson = await Storage.getItem("user");
 
     if (token && userJson) {
-      set({ token, user: JSON.parse(userJson), isLoggedIn: true });
+      set({ token, user: JSON.parse(userJson), isLoggedIn: true, isRestoring: false });
+    } else {
+      set({ isRestoring: false });
     }
   },
 }));

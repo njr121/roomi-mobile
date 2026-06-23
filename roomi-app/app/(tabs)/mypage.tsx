@@ -5,14 +5,16 @@ import { useAuthStore } from "@/store/authStore";
 
 export default function MyPageScreen() {
   const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
+  const isRestoring = useAuthStore((state) => state.isRestoring);
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
   const rootNavigationState = useRootNavigationState();
 
   useEffect(() => {
     if (!rootNavigationState?.key) return;
+    if (isRestoring) return;
     if (!isLoggedIn) router.replace("/login");
-  }, [isLoggedIn, rootNavigationState?.key]);
+  }, [isLoggedIn, isRestoring, rootNavigationState?.key]);
 
   if (!isLoggedIn) {
     return null;

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { View, Text, TextInput, Alert } from "react-native";
-import { useLocalSearchParams, Stack, router } from "expo-router";
+import { View, Text, TextInput, Alert, Platform } from "react-native";
+import { useLocalSearchParams, Stack, router, useRootNavigationState } from "expo-router";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -23,13 +23,17 @@ export default function BookingScreen() {
     maxGuests: string;
   }>();
   const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
+  const isRestoring = useAuthStore((state) => state.isRestoring);
+  const rootNavigationState = useRootNavigationState();
 
   const [checkIn, setCheckIn] = useState<string | null>(null);
   const [checkOut, setCheckOut] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!rootNavigationState?.key) return;
+    if (isRestoring) return;
     if (!isLoggedIn) router.replace("/login");
-  }, [isLoggedIn]);
+  }, [isLoggedIn, isRestoring, rootNavigationState?.key]);
 
   const {
     control,
@@ -64,9 +68,17 @@ export default function BookingScreen() {
         ? { [checkIn]: { startingDay: true, endingDay: true, color: "#0ea5e9", textColor: "white" } }
         : {};
 
+  const notify = (title: string, message: string) => {
+    if (Platform.OS === "web") {
+      window.alert(`${title}\n${message}`);
+      return;
+    }
+    Alert.alert(title, message);
+  };
+
   const onSubmit = async (values: GuestsFormValues) => {
     if (!checkIn || !checkOut) {
-      Alert.alert("날짜를 선택하세요", "체크인과 체크아웃 날짜를 모두 선택해주세요.");
+      notify("날짜를 선택하세요", "체크인과 체크아웃 날짜를 모두 선택해주세요.");
       return;
     }
 
@@ -77,10 +89,10 @@ export default function BookingScreen() {
         checkOut: new Date(checkOut).toISOString(),
         guests: values.guests,
       });
-      Alert.alert("예약 완료", "예약이 생성되었습니다.");
+      notify("예약 완료", "예약이 생성되었습니다.");
       router.replace("/my-bookings");
     } catch (error) {
-      Alert.alert("예약 실패", error instanceof Error ? error.message : "알 수 없는 오류");
+      notify("예약 실패", error instanceof Error ? error.message : "알 수 없는 오류");
     }
   };
 

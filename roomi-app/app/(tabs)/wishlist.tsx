@@ -8,13 +8,15 @@ import { WishlistButton } from "@/components/WishlistButton";
 
 export default function WishlistScreen() {
   const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
+  const isRestoring = useAuthStore((state) => state.isRestoring);
   const { data, isLoading, isError } = useWishlists();
   const rootNavigationState = useRootNavigationState();
 
   useEffect(() => {
     if (!rootNavigationState?.key) return;
+    if (isRestoring) return;
     if (!isLoggedIn) router.replace("/login");
-  }, [isLoggedIn, rootNavigationState?.key]);
+  }, [isLoggedIn, isRestoring, rootNavigationState?.key]);
 
   if (!isLoggedIn) {
     return null;
