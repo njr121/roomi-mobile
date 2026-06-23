@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { View, Text, Alert, Platform } from "react-native";
-import { router } from "expo-router";
+import { router, Stack } from "expo-router";
 import * as AuthSession from "expo-auth-session";
 import * as WebBrowser from "expo-web-browser";
 import env from "@/lib/env";
@@ -9,6 +9,7 @@ import { useAuthStore } from "@/store/authStore";
 import { GoogleButton } from "@/components/GoogleButton";
 import { KakaoButton } from "@/components/KakaoButton";
 import { NaverButton } from "@/components/NaverButton";
+import { BackButton } from "@/components/BackButton";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -54,6 +55,7 @@ export default function LoginScreen() {
 
   return (
     <View className="flex-1 items-center justify-center bg-white px-6">
+      <Stack.Screen options={{ title: "", headerLeft: () => <BackButton /> }} />
       <Text className="mb-8 text-3xl font-bold text-sky-500">Roomi 로그인</Text>
       <View className="w-full gap-3">
         <GoogleButton disabled={!request} onPress={() => promptAsync()} />

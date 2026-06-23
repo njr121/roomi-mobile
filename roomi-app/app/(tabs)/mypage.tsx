@@ -1,25 +1,25 @@
+import { useEffect } from "react";
 import { View, Text, Pressable, Alert, Platform } from "react-native";
-import { router } from "expo-router";
+import { router, useRootNavigationState } from "expo-router";
 import { useAuthStore } from "@/store/authStore";
-import { GoogleButton } from "@/components/GoogleButton";
 
 export default function MyPageScreen() {
   const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
+  const rootNavigationState = useRootNavigationState();
+
+  useEffect(() => {
+    if (!rootNavigationState?.key) return;
+    if (!isLoggedIn) router.replace("/login");
+  }, [isLoggedIn, rootNavigationState?.key]);
 
   if (!isLoggedIn) {
-    return (
-      <View className="flex-1 items-center justify-center px-6">
-        <Text className="mb-4">로그인이 필요합니다.</Text>
-        <GoogleButton onPress={() => router.push("/login")} />
-      </View>
-    );
+    return null;
   }
 
   const doLogout = async () => {
     await logout();
-    router.replace("/login");
   };
 
   const onLogout = () => {

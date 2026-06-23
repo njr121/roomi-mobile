@@ -1,22 +1,23 @@
+import { useEffect } from "react";
 import { FlatList, Text, View, Pressable } from "react-native";
-import { Link, router } from "expo-router";
+import { Link, router, useRootNavigationState } from "expo-router";
 import { useWishlists } from "@/hooks/useWishlists";
 import { useAuthStore } from "@/store/authStore";
 import { AccommodationCard } from "@/components/AccommodationCard";
 import { WishlistButton } from "@/components/WishlistButton";
-import { GoogleButton } from "@/components/GoogleButton";
 
 export default function WishlistScreen() {
   const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
   const { data, isLoading, isError } = useWishlists();
+  const rootNavigationState = useRootNavigationState();
+
+  useEffect(() => {
+    if (!rootNavigationState?.key) return;
+    if (!isLoggedIn) router.replace("/login");
+  }, [isLoggedIn, rootNavigationState?.key]);
 
   if (!isLoggedIn) {
-    return (
-      <View className="flex-1 items-center justify-center px-6">
-        <Text className="mb-4">로그인이 필요합니다.</Text>
-        <GoogleButton onPress={() => router.push("/login")} />
-      </View>
-    );
+    return null;
   }
 
   if (isLoading) {

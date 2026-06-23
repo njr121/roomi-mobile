@@ -3,6 +3,7 @@ import React from 'react';
 
 import { HapticTab } from '@/components/haptic-tab';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { BackButton } from '@/components/BackButton';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
@@ -28,6 +29,8 @@ export default function TabLayout() {
         name="my-bookings"
         options={{
           title: '내 예약',
+          headerShown: true,
+          headerLeft: () => <BackButton />,
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="calendar" color={color} />,
         }}
       />
@@ -35,6 +38,8 @@ export default function TabLayout() {
         name="wishlist"
         options={{
           title: '찜 목록',
+          headerShown: true,
+          headerLeft: () => <BackButton />,
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="heart.fill" color={color} />,
         }}
       />

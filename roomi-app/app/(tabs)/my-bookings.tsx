@@ -1,11 +1,11 @@
+import { useEffect } from "react";
 import { FlatList, Text, View, Pressable, Image, Alert, Platform } from "react-native";
-import { router } from "expo-router";
+import { router, useRootNavigationState } from "expo-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMyBookings } from "@/hooks/useMyBookings";
 import { useAuthStore } from "@/store/authStore";
 import { cancelBooking } from "@/lib/api";
 import { BookingWithDetails } from "@/types";
-import { GoogleButton } from "@/components/GoogleButton";
 import { getTypeImage } from "@/lib/typeImages";
 
 function BookingRow({ booking }: { booking: BookingWithDetails }) {
@@ -73,14 +73,15 @@ function BookingRow({ booking }: { booking: BookingWithDetails }) {
 export default function MyBookingsScreen() {
   const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
   const { data, isLoading, isError } = useMyBookings();
+  const rootNavigationState = useRootNavigationState();
+
+  useEffect(() => {
+    if (!rootNavigationState?.key) return;
+    if (!isLoggedIn) router.replace("/login");
+  }, [isLoggedIn, rootNavigationState?.key]);
 
   if (!isLoggedIn) {
-    return (
-      <View className="flex-1 items-center justify-center px-6">
-        <Text className="mb-4">로그인이 필요합니다.</Text>
-        <GoogleButton onPress={() => router.push("/login")} />
-      </View>
-    );
+    return null;
   }
 
   if (isLoading) {

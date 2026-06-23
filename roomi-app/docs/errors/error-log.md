@@ -524,3 +524,216 @@ className={`... ${isCancelled || isPending ? "bg-red-300" : "bg-red-500"}`}
 터치 가능 요소를 다른 터치 가능 요소 안에 중첩시키면, 이벤트 버블링 차단(`stopPropagation`)으로 항상 해결되는 게 아니다(특히 웹에서 `<a>` 태그처럼 자체 기본 동작이 있는 요소). 가장 안전한 해결은 처음부터 중첩을 피하고, `position: absolute`로 시각적으로만 겹치는 형제 구조로 설계하는 것이다.
 
 ---
+
+## 2026-06-22 | curl로 한글 쿼리 테스트 시 400 Bad Request(서버 로그에도 안 남음)
+
+### 증상
+
+`curl "http://localhost:3000/api/accommodations?region=서울"`로 검색 가용성 필터(Phase 7)를 테스트하는데 매번 400 에러가 나고, 백엔드 dev 서버 로그에는 그 요청이 한 줄도 안 찍힘.
+
+### 에러 메시지
+
+```
+{"success":false,"error":{"code":"VALIDATION_ERROR","message":"잘못된 쿼리 파라미터입니다"}}
+```
+(실제로는 우리 라우트 핸들러가 만든 응답이 아니라 Node HTTP 파서가 거부한 것 — 메시지가 우연히 비슷해 보여서 혼동했음)
+
+### 원인
+
+HTTP 요청 라인은 아스키 문자만 허용하는 규격인데, `curl`이 한글을 URL 인코딩 없이 그대로 요청 라인에 넣어서 보냄. Node의 HTTP 파서(llhttp)가 Next.js 라우트 핸들러에 도달하기도 전에 자체적으로 요청을 거부해서, 우리 코드 로그에 아예 안 남았음.
+
+### 해결
+
+```bash
+# ❌
+curl "http://localhost:3000/api/accommodations?region=서울"
+
+# ✅ curl이 알아서 인코딩하게 시킴
+curl -G "http://localhost:3000/api/accommodations" --data-urlencode "region=서울"
+```
+
+### 교훈
+
+서버 로그에 요청 자체가 안 남으면, 우리 코드 이전 단계(HTTP 파싱, 네트워크)에서 막혔다는 신호다. 에러가 "코드가 만든 것처럼 보이는 메시지"라고 무조건 코드를 의심하지 말고, 어느 계층에서 막혔는지부터 확인해야 한다.
+
+---
+
+## 2026-06-22 | NativeWind `className`이 `Animated.View`에 안 먹혀서 캐로셀 레이아웃이 찌그러짐
+
+### 증상
+
+캐로셀(`AccommodationCarousel`) 이미지 영역에 `<Animated.View className="h-48 w-full ...">`로 높이를 줬는데, 화면엔 이미지가 거의 안 보이고 절대 위치로 띄운 배지·하트·화살표만 둥둥 떠 있는 것처럼 보임.
+
+### 에러 메시지
+
+(런타임 에러 없음 — 조용히 레이아웃만 깨짐)
+
+### 원인
+
+NativeWind의 `className` → `style` 자동 변환은 `View`/`Text`/`Image` 같은 RN 기본 컴포넌트에는 보장되지만, `Animated.View`(애니메이션 전용 래퍼)에는 보장되지 않음. `className="h-48 w-full"`이 무시되어 높이가 0이 되고, 그 안의 자식(이미지 포함)도 같이 찌그러짐.
+
+### 해결
+
+레이아웃에 직접 영향을 주는 값(높이·너비)은 일반 `View`(부모)에 `className`으로 주고, `Animated.View`는 `style={{ position: "absolute", top:0,left:0,right:0,bottom:0, opacity }}`처럼 애니메이션 값만 `style`로 직접 지정.
+
+### 교훈
+
+`className`이 안 먹히는 버그가 "이 컴포넌트에서만" 생기면, 그 컴포넌트가 RN 기본 컴포넌트인지(`View`/`Text`/`Image`) 아니면 `Animated.*`나 서드파티 컴포넌트인지부터 의심한다. 레이아웃 핵심 값은 의심되면 처음부터 `style` prop으로 준다.
+
+---
+
+## 2026-06-22 | 그림자(`shadow`)와 모서리 자르기(`overflow-hidden`)를 같은 박스에 줘서 그림자가 안 보임
+
+### 증상
+
+카드형 컴포넌트(`AccommodationCard`, 내 예약 카드 등)에 그림자를 줬는데 네이티브/일부 환경에서 그림자가 전혀 안 보이거나 잘려서 보임. **이 버그가 디자인 작업 중 최소 2번(Phase 17 카드, Phase 18 내예약 카드) 반복 발생.**
+
+### 원인
+
+`shadow-md`(그림자)와 `overflow-hidden`(모서리 밖으로 나가는 내용 자르기)을 같은 `View`에 같이 주면, `overflow: hidden`이 그림자까지 그 박스 밖으로 못 나가게 잘라버림.
+
+### 해결
+
+그림자용 바깥 박스와 자르기용 안쪽 박스를 분리:
+```tsx
+<View className="rounded-lg shadow-md shadow-black/20">       {/* 그림자만 */}
+  <View className="overflow-hidden rounded-lg">                {/* 자르기만 */}
+    {/* 이미지, 내용 */}
+  </View>
+</View>
+```
+
+### 교훈
+
+같은 종류의 버그가 두 번 반복됐다는 건 "그때그때 고치고 다음에 또 까먹는" 상태라는 뜻이다. 이제부터 카드형 컴포넌트를 새로 만들 때는 처음부터 그림자/자르기 박스를 분리하는 걸 기본값으로 삼는다(메모리 `feedback_image_card_layout.md`에 표준 패턴으로 저장함).
+
+---
+
+## 2026-06-22 | 캐로셀 이미지가 박스의 절반만 채워짐
+
+### 증상
+
+캐로셀(배너형)에서 이미지가 박스 전체가 아니라 왼쪽 절반 정도만 채워지고, 나머지 절반은 배경색(회색)만 보임.
+
+### 원인
+
+`Image`가 `Animated.View` → `Link`(`asChild`) → `Pressable` → `Image` 순으로 여러 겹 감싸여 있었는데, 그 중간의 `Link`/`Pressable` 체인에서 너비(width) 정보가 끝까지 안 전달됨(겹마다 `flex: 1`을 줬는데도 실제로는 적용이 안 된 것으로 추정 — RN-web에서 `Link`의 `asChild` 래퍼가 항상 부모 크기를 그대로 물려주는 게 보장되지 않음).
+
+### 해결
+
+`Image`를 중간 래퍼들 없이 `position: absolute`로 박스에 직접 꽉 채우고, 탭 처리는 별도의 투명한 `Pressable`(역시 절대위치 전체 덮기)로 분리:
+```tsx
+<View className="relative h-48 w-full overflow-hidden rounded-lg bg-gray-200">
+  <Animated.View style={{ position: "absolute", top:0,left:0,right:0,bottom:0, opacity }}>
+    <Image source={...} resizeMode="cover" style={{ width: "100%", height: "100%" }} />
+  </Animated.View>
+  <Link href={...} asChild>
+    <Pressable style={{ position: "absolute", top:0,left:0,right:0,bottom:0 }} />
+  </Link>
+  {/* 하트, 화살표 등은 그 위에 더 쌓기 */}
+</View>
+```
+
+### 교훈
+
+이미지나 크기가 중요한 요소를 여러 겹의 `Link`/`Pressable`/`Animated.View`로 감싸야 할 때는, flex 체인에 의존하기보다 `position: absolute`로 명시적으로 채우는 게 훨씬 안정적이다.
+
+---
+
+## 2026-06-22 | 카카오 아이콘 파일명 오타(`kakaoi-icon.png`)로 이미지 안 뜸
+
+### 증상
+
+카카오 로그인 버튼에 아이콘이 안 보임(또는 빌드 시 해당 파일을 못 찾는 문제로 이어질 수 있었음).
+
+### 원인
+
+코드는 `require("@/assets/images/kakao-icon.png")`를 참조하는데, 실제 파일이 사용자가 다시 저장하는 과정에서 `kakaoi-icon.png`(중간에 "i" 하나 더 들어감)로 저장돼 있었음. `require()`는 정적 경로라 파일명이 한 글자라도 다르면 매칭이 안 됨.
+
+### 해결
+
+```bash
+mv assets/images/kakaoi-icon.png assets/images/kakao-icon.png
+```
+
+### 교훈
+
+이미지/에셋 파일을 사용자가 직접 교체하는 작업 흐름에서는, 코드가 참조하는 정확한 파일명과 실제 저장된 파일명이 항상 같은지 `ls`/`grep`으로 확인하는 습관이 필요하다 — 오타 하나가 "이미지가 안 뜬다"는 모호한 증상으로만 나타나서 원인 찾기가 헷갈렸음.
+
+---
+
+## 2026-06-22 | picsum.photos 서비스 장애(Cloudflare 522)로 이미지 전부 깨짐
+
+### 증상
+
+`backfill-images.ts`로 picsum.photos URL을 채웠는데, 앱에서 모든 숙소 이미지가 안 뜨고 브라우저에서 직접 그 URL을 열면 "Connection timed out, Error code 522"가 나옴.
+
+### 원인
+
+코드 문제가 아니라 picsum.photos라는 외부 서비스 자체의 장애. Cloudflare가 "자신은 정상이지만 그 뒤의 원본 서버가 응답을 안 한다"고 알려주는 상태(522 = 중계자가 알려주는 origin 타임아웃).
+
+### 해결
+
+더 안정적인 대체 서비스(`placehold.co`)로 교체. 이후 숙박 종류별 실제 사진(사용자 제공)으로 다시 교체해서 외부 서비스 의존성 자체를 제거.
+
+### 교훈
+
+외부 서비스 URL이 갑자기 전부 실패하면, 코드를 고치기 전에 `curl -sI`로 그 서비스 자체가 살아있는지부터 확인한다. 가능하면 포트폴리오처럼 데모 안정성이 중요한 프로젝트는 외부 서비스에 대한 런타임 의존을 최소화(로컬 에셋 사용)하는 게 안전하다.
+
+---
+
+## 2026-06-22 | 로그아웃하면 로그인 화면에 갇혀서 못 빠져나옴
+
+### 증상
+
+"마이" 탭에서 로그아웃하면 로그인 화면으로 강제 이동되는데, 그 화면엔 뒤로 갈 방법이 전혀 없어서(별도 Stack 화면, 탭바도 안 보임) 실제로 로그인하지 않으면 앱을 계속 쓸 수 없는 상태가 됨.
+
+### 원인
+
+`mypage.tsx`의 `doLogout()`이 로그아웃 후 `router.replace("/login")`을 강제로 호출했음. PRD상 비로그인 사용자도 검색·둘러보기가 가능해야 하는데(US-02), 로그아웃이 그 원칙을 깨고 사용자를 가둬버리는 흐름이었음.
+
+### 해결
+
+`doLogout()`에서 강제 이동을 제거 — 로그아웃하면 `isLoggedIn`이 `false`가 되면서 마이 화면이 자연스럽게 "로그인이 필요합니다" 상태로 다시 그려지고, 하단 탭바를 통해 다른 화면으로 자유롭게 이동 가능해짐.
+
+### 교훈
+
+인증 관련 화면 전환을 만들 때는 "사용자가 이 상태에서 빠져나갈 방법이 있는가"를 항상 확인해야 한다. 특히 비로그인도 일부 기능이 허용되는 앱에서는, 로그아웃/미인증 상태를 "막다른 길"로 만들면 안 된다.
+
+---
+
+## 2026-06-22 | "Attempted to navigate before mounting the Root Layout component"
+
+### 증상
+
+비로그인 상태에서 "내 예약"/"찜 목록"/"마이" 탭에 진입할 때 `useEffect`로 `/login`을 강제 이동시키도록 고쳤는데, 앱 시작 시점에 이 화면으로 바로 들어오면 빨간 에러 화면이 뜸.
+
+### 에러 메시지
+
+```
+Uncaught Error
+Attempted to navigate before mounting the Root Layout component.
+Ensure the Root Layout component is rendering a Slot, or other navigator on the first render.
+```
+
+### 원인
+
+앱이 막 시작될 때 `useAuthStore`의 `restore()`(로그인 상태 복원, 비동기)가 끝나기 전에는 `isLoggedIn`이 일단 `false`로 시작하는데, 그 시점에 `useEffect`가 즉시 `router.replace("/login")`을 호출함. 그런데 Expo Router의 루트 네비게이터(Root Layout) 자체가 아직 완전히 마운트되기 전이라, 그 시점의 네비게이션 시도를 거부함.
+
+### 해결
+
+`useRootNavigationState()`로 라우터가 준비됐는지 확인한 다음에만 이동하도록 가드 추가:
+```tsx
+const rootNavigationState = useRootNavigationState();
+
+useEffect(() => {
+  if (!rootNavigationState?.key) return;   // 라우터 준비 전이면 아무것도 안 함
+  if (!isLoggedIn) router.replace("/login");
+}, [isLoggedIn, rootNavigationState?.key]);
+```
+
+### 교훈
+
+앱이 막 시작되는 시점(특히 비동기 상태 복원이 끝나기 전)에 `useEffect`로 네비게이션을 실행하는 코드는, 라우터 자체가 준비됐는지부터 확인해야 한다. `isLoggedIn`처럼 "초기값이 임시로 false인 상태"에 반응해서 즉시 리다이렉트하는 패턴은 이런 초기 마운트 타이밍 문제를 항상 의심해야 한다.
+
+---
