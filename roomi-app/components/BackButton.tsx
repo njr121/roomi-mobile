@@ -4,9 +4,10 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 
 type BackButtonProps = {
   fallbackHref?: "/";
+  size?: number;
 };
 
-export function BackButton({ fallbackHref = "/" }: BackButtonProps) {
+export function BackButton({ fallbackHref = "/", size = 24 }: BackButtonProps) {
   const goBack = () => {
     if (router.canGoBack()) {
       router.back();
@@ -16,8 +17,8 @@ export function BackButton({ fallbackHref = "/" }: BackButtonProps) {
   };
 
   return (
-    <Pressable onPress={goBack} className="h-11 w-11 items-center justify-center">
-      <MaterialIcons name="arrow-back" size={24} color="#374151" />
+    <Pressable onPress={goBack} hitSlop={10}>
+      <MaterialIcons name="arrow-back" size={size} color="#374151" />
     </Pressable>
   );
 }

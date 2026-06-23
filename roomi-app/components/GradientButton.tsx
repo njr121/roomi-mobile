@@ -23,7 +23,7 @@ export function GradientButton({ label, onPress, disabled, className }: Gradient
           opacity: disabled ? 0.5 : 1,
         }}
       >
-        <Text className="font-semibold text-white">{label}</Text>
+        <Text className="text-base font-semibold text-white">{label}</Text>
       </LinearGradient>
     </Pressable>
   );

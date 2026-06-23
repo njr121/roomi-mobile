@@ -1,27 +1,42 @@
+import { useRef } from "react";
 import { ScrollView, Text, View, Pressable, Image } from "react-native";
-import { useLocalSearchParams, Stack, router } from "expo-router";
+import { useLocalSearchParams, router } from "expo-router";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useAccommodationDetail } from "@/hooks/useAccommodationDetail";
 import { PriceBlock } from "@/components/PriceBlock";
 import { WishlistButton } from "@/components/WishlistButton";
+import { BottomTabBar } from "@/components/BottomTabBar";
+import { ScrollJumpButtons } from "@/components/ScrollJumpButtons";
+import { AppHeader } from "@/components/AppHeader";
 import { getTypeImage } from "@/lib/typeImages";
 
 export default function AccommodationDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data, isLoading, isError } = useAccommodationDetail(id);
+  const scrollRef = useRef<ScrollView>(null);
 
   if (isLoading) {
-    return <Text>불러오는 중...</Text>;
+    return (
+      <View className="flex-1">
+        <AppHeader variant="title" title="" showBack />
+        <Text className="px-4 py-4">불러오는 중...</Text>
+      </View>
+    );
   }
 
   if (isError || !data) {
-    return <Text>데이터를 불러오지 못했습니다.</Text>;
+    return (
+      <View className="flex-1">
+        <AppHeader variant="title" title="" showBack />
+        <Text className="px-4 py-4">데이터를 불러오지 못했습니다.</Text>
+      </View>
+    );
   }
 
   return (
-    <ScrollView className="bg-white">
-      <Stack.Screen options={{ title: data.name }} />
-
+    <View className="flex-1">
+      <AppHeader variant="title" title={data.name} showBack />
+      <ScrollView ref={scrollRef} className="flex-1 bg-white">
       <View className="bg-gray-200" style={{ height: 224, maxWidth: "100%" }}>
         <Image
           source={getTypeImage(data.type, data.id)}
@@ -74,6 +89,13 @@ export default function AccommodationDetailScreen() {
           </Pressable>
         ))}
       </View>
-    </ScrollView>
+      </ScrollView>
+      <ScrollJumpButtons
+        bottomOffset={76}
+        onScrollToTop={() => scrollRef.current?.scrollTo({ y: 0, animated: true })}
+        onScrollToBottom={() => scrollRef.current?.scrollToEnd({ animated: true })}
+      />
+      <BottomTabBar />
+    </View>
   );
 }

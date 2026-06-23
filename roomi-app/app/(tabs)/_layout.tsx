@@ -1,55 +1,20 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
 
-import { HapticTab } from '@/components/haptic-tab';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { BackButton } from '@/components/BackButton';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { TabsBottomTabBar } from '@/components/BottomTabBar';
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
-
   return (
     <Tabs
+      tabBar={(props) => <TabsBottomTabBar {...props} />}
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
         headerShown: false,
-        tabBarButton: HapticTab,
         sceneStyle: { backgroundColor: '#ffffff' },
       }}>
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="my-bookings"
-        options={{
-          title: '내 예약',
-          headerShown: true,
-          headerLeft: () => <BackButton />,
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="calendar" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="wishlist"
-        options={{
-          title: '찜 목록',
-          headerShown: true,
-          headerLeft: () => <BackButton />,
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="heart.fill" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="mypage"
-        options={{
-          title: '마이',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.fill" color={color} />,
-        }}
-      />
+      <Tabs.Screen name="index" />
+      <Tabs.Screen name="my-bookings" />
+      <Tabs.Screen name="wishlist" />
+      <Tabs.Screen name="mypage" />
     </Tabs>
   );
 }

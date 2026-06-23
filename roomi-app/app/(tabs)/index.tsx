@@ -1,13 +1,14 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { FlatList, Text, View, Pressable, Modal } from "react-native";
 import { Link, router } from "expo-router";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import { AppHeader } from "@/components/AppHeader";
 import { AccommodationCard } from "@/components/AccommodationCard";
 import { AccommodationCarousel } from "@/components/AccommodationCarousel";
 import { WishlistButton } from "@/components/WishlistButton";
 import { SearchBar } from "@/components/SearchBar";
 import { CategoryIcons } from "@/components/CategoryIcons";
 import { SortSelector } from "@/components/SortSelector";
+import { ScrollJumpButtons } from "@/components/ScrollJumpButtons";
 import { useAccommodations } from "@/hooks/useAccommodations";
 import { Accommodation, AccommodationFilters } from "@/types";
 
@@ -16,6 +17,7 @@ export default function HomeScreen() {
     sort: "currentPrice",
   });
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const listRef = useRef<FlatList>(null);
 
   const { data, isLoading, isError, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useAccommodations(filters);
@@ -31,16 +33,7 @@ export default function HomeScreen() {
 
   return (
     <View className="flex-1">
-      <View className="flex-row items-center gap-3 border-b border-gray-200 px-4 py-3">
-        <Text className="text-xl font-bold text-sky-500">Roomi</Text>
-        <Pressable
-          onPress={() => setIsSearchOpen(true)}
-          className="flex-1 min-h-11 flex-row items-center justify-between rounded-lg border border-gray-300 px-3"
-        >
-          <Text className="text-gray-400">어디로 가시나요?</Text>
-          <MaterialIcons name="search" size={20} color="#9ca3af" />
-        </Pressable>
-      </View>
+      <AppHeader variant="search" onSearchPress={() => setIsSearchOpen(true)} />
 
       {isLoading && <Text className="px-4">불러오는 중...</Text>}
       {isError && <Text className="px-4">데이터를 불러오지 못했습니다.</Text>}
@@ -53,6 +46,7 @@ export default function HomeScreen() {
 
       {items.length > 0 && (
         <FlatList
+          ref={listRef}
           data={items}
           keyExtractor={(item: Accommodation) => item.id}
           numColumns={2}
@@ -89,6 +83,13 @@ export default function HomeScreen() {
               </View>
             </View>
           )}
+        />
+      )}
+
+      {items.length > 0 && (
+        <ScrollJumpButtons
+          onScrollToTop={() => listRef.current?.scrollToOffset({ offset: 0, animated: true })}
+          onScrollToBottom={() => listRef.current?.scrollToEnd({ animated: true })}
         />
       )}
 

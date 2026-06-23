@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { View, Text, Alert, Platform } from "react-native";
-import { router, Stack } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { router } from "expo-router";
 import * as AuthSession from "expo-auth-session";
 import * as WebBrowser from "expo-web-browser";
 import env from "@/lib/env";
@@ -20,6 +21,7 @@ const discovery = {
 
 export default function LoginScreen() {
   const login = useAuthStore((state) => state.login);
+  const insets = useSafeAreaInsets();
   const redirectUri = AuthSession.makeRedirectUri();
 
   const [request, response, promptAsync] = AuthSession.useAuthRequest(
@@ -54,13 +56,17 @@ export default function LoginScreen() {
   };
 
   return (
-    <View className="flex-1 items-center justify-center bg-white px-6">
-      <Stack.Screen options={{ title: "", headerLeft: () => <BackButton /> }} />
-      <Text className="mb-8 text-3xl font-bold text-sky-500">Roomi 로그인</Text>
-      <View className="w-full gap-3">
-        <GoogleButton disabled={!request} onPress={() => promptAsync()} />
-        <KakaoButton onPress={() => showComingSoon("Kakao")} />
-        <NaverButton onPress={() => showComingSoon("Naver")} />
+    <View className="flex-1 bg-white">
+      <View className="absolute left-4 z-10" style={{ top: insets.top + 16 }}>
+        <BackButton size={26} />
+      </View>
+      <View className="flex-1 items-center justify-center px-4">
+        <Text className="mb-8 text-3xl font-bold text-sky-500">Roomi 로그인</Text>
+        <View className="w-full gap-3">
+          <GoogleButton disabled={!request} onPress={() => promptAsync()} />
+          <KakaoButton onPress={() => showComingSoon("Kakao")} />
+          <NaverButton onPress={() => showComingSoon("Naver")} />
+        </View>
       </View>
     </View>
   );

@@ -43,7 +43,7 @@ export function WishlistButton({ accommodationId }: WishlistButtonProps) {
     <Pressable onPress={onPress} disabled={isPending} className="h-11 w-11 items-center justify-center">
       <MaterialIcons
         name={isWishlisted ? "favorite" : "favorite-border"}
-        size={24}
+        size={26}
         color={isWishlisted ? "#ef4444" : "#9ca3af"}
       />
     </Pressable>

@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { View, Text, Pressable, Alert, Platform } from "react-native";
 import { router, useRootNavigationState } from "expo-router";
 import { useAuthStore } from "@/store/authStore";
+import { AppHeader } from "@/components/AppHeader";
 
 export default function MyPageScreen() {
   const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
@@ -39,16 +40,19 @@ export default function MyPageScreen() {
   };
 
   return (
-    <View className="flex-1 px-6 py-6">
-      <Text className="mb-1 text-xl font-bold">{user?.name ?? "사용자"}</Text>
-      <Text className="mb-8 text-gray-500">{user?.email}</Text>
+    <View className="flex-1">
+      <AppHeader variant="title" title="마이 페이지" showBack />
+      <View className="px-4 py-6">
+        <Text className="mb-1 text-xl font-bold">{user?.name ?? "사용자"}</Text>
+        <Text className="mb-8 text-gray-500">{user?.email}</Text>
 
-      <Pressable
-        onPress={onLogout}
-        className="min-h-11 items-center justify-center rounded-lg border border-red-500"
-      >
-        <Text className="font-semibold text-red-500">로그아웃</Text>
-      </Pressable>
+        <Pressable
+          onPress={onLogout}
+          className="min-h-11 items-center justify-center rounded-lg border border-red-500"
+        >
+          <Text className="text-base font-semibold text-red-500">로그아웃</Text>
+        </Pressable>
+      </View>
     </View>
   );
 }

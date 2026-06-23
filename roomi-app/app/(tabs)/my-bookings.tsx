@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { FlatList, Text, View, Pressable, Image, Alert, Platform } from "react-native";
 import { router, useRootNavigationState } from "expo-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -7,6 +7,8 @@ import { useAuthStore } from "@/store/authStore";
 import { cancelBooking } from "@/lib/api";
 import { BookingWithDetails } from "@/types";
 import { getTypeImage } from "@/lib/typeImages";
+import { ScrollJumpButtons } from "@/components/ScrollJumpButtons";
+import { AppHeader } from "@/components/AppHeader";
 
 function BookingRow({ booking }: { booking: BookingWithDetails }) {
   const queryClient = useQueryClient();
@@ -75,6 +77,7 @@ export default function MyBookingsScreen() {
   const isRestoring = useAuthStore((state) => state.isRestoring);
   const { data, isLoading, isError } = useMyBookings();
   const rootNavigationState = useRootNavigationState();
+  const listRef = useRef<FlatList>(null);
 
   useEffect(() => {
     if (!rootNavigationState?.key) return;
@@ -86,28 +89,31 @@ export default function MyBookingsScreen() {
     return null;
   }
 
-  if (isLoading) {
-    return <Text className="px-4">불러오는 중...</Text>;
-  }
-
-  if (isError || !data) {
-    return <Text className="px-4">데이터를 불러오지 못했습니다.</Text>;
-  }
-
-  if (data.length === 0) {
-    return (
-      <View className="flex-1 items-center justify-center bg-white">
-        <Text className="text-gray-400">아직 예약이 없습니다.</Text>
-      </View>
-    );
-  }
-
   return (
-    <FlatList
-      data={data}
-      keyExtractor={(item) => item.id}
-      contentContainerStyle={{ paddingTop: 12 }}
-      renderItem={({ item }) => <BookingRow booking={item} />}
-    />
+    <View className="flex-1">
+      <AppHeader variant="title" title="내 예약" showBack />
+      {isLoading && <Text className="px-4">불러오는 중...</Text>}
+      {!isLoading && (isError || !data) && <Text className="px-4">데이터를 불러오지 못했습니다.</Text>}
+      {!isLoading && data && data.length === 0 && (
+        <View className="flex-1 items-center justify-center bg-white">
+          <Text className="text-gray-400">아직 예약이 없습니다.</Text>
+        </View>
+      )}
+      {!isLoading && data && data.length > 0 && (
+        <>
+          <FlatList
+            ref={listRef}
+            data={data}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={{ paddingTop: 12 }}
+            renderItem={({ item }) => <BookingRow booking={item} />}
+          />
+          <ScrollJumpButtons
+            onScrollToTop={() => listRef.current?.scrollToOffset({ offset: 0, animated: true })}
+            onScrollToBottom={() => listRef.current?.scrollToEnd({ animated: true })}
+          />
+        </>
+      )}
+    </View>
   );
 }

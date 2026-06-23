@@ -1,9 +1,12 @@
 import { FlatList, Text, View, Pressable } from "react-native";
-import { Stack, Link, useLocalSearchParams } from "expo-router";
-import { useState } from "react";
+import { Link, useLocalSearchParams } from "expo-router";
+import { useRef, useState } from "react";
+import { AppHeader } from "@/components/AppHeader";
 import { AccommodationCard } from "@/components/AccommodationCard";
 import { WishlistButton } from "@/components/WishlistButton";
 import { SortSelector } from "@/components/SortSelector";
+import { BottomTabBar } from "@/components/BottomTabBar";
+import { ScrollJumpButtons } from "@/components/ScrollJumpButtons";
 import { useAccommodations } from "@/hooks/useAccommodations";
 import { Accommodation, AccommodationFilters } from "@/types";
 
@@ -29,10 +32,11 @@ export default function SearchResultsScreen() {
     useAccommodations(filters);
 
   const items = data?.pages.flatMap((page) => page.data) ?? [];
+  const listRef = useRef<FlatList>(null);
 
   return (
     <View className="flex-1 bg-white">
-      <Stack.Screen options={{ title: "검색 결과" }} />
+      <AppHeader variant="title" title="검색 결과" showBack />
 
       <SortSelector value={sort ?? "currentPrice"} onChange={setSort} />
 
@@ -47,6 +51,8 @@ export default function SearchResultsScreen() {
 
       {items.length > 0 && (
         <FlatList
+          ref={listRef}
+          style={{ flex: 1 }}
           data={items}
           keyExtractor={(item: Accommodation) => item.id}
           numColumns={2}
@@ -72,6 +78,14 @@ export default function SearchResultsScreen() {
           )}
         />
       )}
+      {items.length > 0 && (
+        <ScrollJumpButtons
+          bottomOffset={76}
+          onScrollToTop={() => listRef.current?.scrollToOffset({ offset: 0, animated: true })}
+          onScrollToBottom={() => listRef.current?.scrollToEnd({ animated: true })}
+        />
+      )}
+      <BottomTabBar />
     </View>
   );
 }

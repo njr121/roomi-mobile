@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
-import { View, Text, TextInput, Alert, Platform } from "react-native";
-import { useLocalSearchParams, Stack, router, useRootNavigationState } from "expo-router";
+import { useEffect, useMemo, useState } from "react";
+import { View, Text, TextInput, Alert, Platform, ScrollView } from "react-native";
+import { useLocalSearchParams, router } from "expo-router";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -8,12 +8,19 @@ import { Calendar, DateData } from "react-native-calendars";
 import { createBooking } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
 import { GradientButton } from "@/components/GradientButton";
+import { AppHeader } from "@/components/AppHeader";
 
-const GuestsFormSchema = z.object({
-  guests: z.coerce.number().int().min(1, "1명 이상이어야 합니다"),
-});
+function createGuestsFormSchema(maxGuests: number) {
+  return z.object({
+    guests: z.coerce
+      .number()
+      .int()
+      .min(1, "1명 이상이어야 합니다")
+      .max(maxGuests, `최대 ${maxGuests}명까지 가능합니다`),
+  });
+}
 
-type GuestsFormValues = z.infer<typeof GuestsFormSchema>;
+type GuestsFormValues = z.infer<ReturnType<typeof createGuestsFormSchema>>;
 
 export default function BookingScreen() {
   const { roomId, roomName, price, maxGuests } = useLocalSearchParams<{
@@ -24,23 +31,23 @@ export default function BookingScreen() {
   }>();
   const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
   const isRestoring = useAuthStore((state) => state.isRestoring);
-  const rootNavigationState = useRootNavigationState();
 
   const [checkIn, setCheckIn] = useState<string | null>(null);
   const [checkOut, setCheckOut] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!rootNavigationState?.key) return;
     if (isRestoring) return;
     if (!isLoggedIn) router.replace("/login");
-  }, [isLoggedIn, isRestoring, rootNavigationState?.key]);
+  }, [isLoggedIn, isRestoring]);
+
+  const guestsFormSchema = useMemo(() => createGuestsFormSchema(Number(maxGuests)), [maxGuests]);
 
   const {
     control,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<GuestsFormValues>({
-    resolver: zodResolver(GuestsFormSchema),
+    resolver: zodResolver(guestsFormSchema),
     defaultValues: { guests: 1 },
   });
 
@@ -97,8 +104,9 @@ export default function BookingScreen() {
   };
 
   return (
-    <View className="flex-1 bg-white px-6 py-4">
-      <Stack.Screen options={{ title: "예약하기" }} />
+    <View className="flex-1">
+      <AppHeader variant="title" title="예약하기" showBack />
+      <ScrollView className="flex-1 bg-white px-4 py-4" contentContainerStyle={{ paddingBottom: 24 }}>
       <Text className="mb-4 text-lg font-bold">
         {roomName} · {price}원/박 · 최대 {maxGuests}명
       </Text>
@@ -135,6 +143,7 @@ export default function BookingScreen() {
         onPress={handleSubmit(onSubmit)}
         className="mt-6"
       />
+      </ScrollView>
     </View>
   );
 }
