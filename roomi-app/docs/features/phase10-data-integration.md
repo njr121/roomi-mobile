@@ -46,7 +46,7 @@ Phase 9에서 mock 데이터로 화면에 카드가 보이는 것까지 완료. 
 
 **정의**: `EXPO_PUBLIC_API_URL` 환경변수를 Zod로 검증해서 export (Expo는 클라이언트에 노출할 환경변수에 `EXPO_PUBLIC_` 접두사가 필요 — 일반 `process.env.API_URL`은 앱 번들에 포함되지 않음)
 
-**확인할 것**: `.env` 파일에 `EXPO_PUBLIC_API_URL=http://localhost:3000` 추가 필요 (사용자가 직접 입력, Claude가 `.env` 파일을 읽거나 쓰지 않음)
+**확인할 것**: `.env` 파일에 `EXPO_PUBLIC_API_URL=http://localhost:3000` 추가 필요
 
 **성공 기준**: 컴파일 오류 없이 `env.API_URL` 형태로 다른 파일에서 가져다 쓸 수 있음
 
