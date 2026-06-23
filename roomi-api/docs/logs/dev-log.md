@@ -105,7 +105,7 @@
 
 ---
 
-## 2026-06-12 | 세팅 정비 — Claude Code 설정 완료
+## 2026-06-12 | 세팅 정비
 
 ### 완료
 
@@ -113,7 +113,7 @@
   - `Write(.env*)`, `Write(prisma/migrations/*)`, `Write(**/node_modules/**)`
   - `Write(package-lock.json)`, `Write(.github/workflows/*)`
 - [x] `roomi-api/.claude/settings.local.json` — `../roomi-app/**` 도메인 차단 확인
-- [x] `CLAUDE.md` — "Claude Code 설정 파일" 섹션 추가 (실제 파일 위치·내용 기준)
+- [x] `CLAUDE.md` — 설정 파일 섹션 추가 (실제 파일 위치·내용 기준)
 - [x] 전체 문서 정합성 수정 — Google 단독 → 4-provider 인증으로 확장
   - `CLAUDE.md`, `phase3-auth.md`, `phase2-common-modules.md` 반영
 - [x] 파일명 kebab-case 통일 — `dev_log.md` → `dev-log.md`, `error_log.md` → `error-log.md` (git mv)
