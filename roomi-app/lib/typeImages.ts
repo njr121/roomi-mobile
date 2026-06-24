@@ -12,6 +12,7 @@ const TYPE_IMAGES = {
     require("@/assets/images/motel-4.jpg"),
   ],
   pension: [
+    require("@/assets/images/pension-1.jpg"),
     require("@/assets/images/pension-2.jpg"),
     require("@/assets/images/pension-3.jpg"),
     require("@/assets/images/pension-4.jpg"),

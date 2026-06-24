@@ -30,12 +30,6 @@
 
 `components/AppHeader.tsx`, `components/BottomTabBar.tsx`, `components/BackButton.tsx`, `components/AccommodationCarousel.tsx`, `components/SplashScreen.tsx`, `components/ScrollJumpButtons.tsx`, `components/GoogleButton.tsx`/`KakaoButton.tsx`/`NaverButton.tsx`/`GradientButton.tsx`(크기), `app/_layout.tsx`, `app/(tabs)/_layout.tsx`, `app/login.tsx`, `app/(tabs)/*.tsx`, `app/accommodation/[id].tsx`, `app/search-results.tsx`, `app/booking/[roomId].tsx`
 
-## 삭제
-
-`lib/typeImages.ts`에서 `pension-1.jpg` 참조(파일 누락으로 빌드 크래시 — 실제 파일 받으면 복구 필요)
-
----
-
 ## 완료 기준
 
 ```bash
