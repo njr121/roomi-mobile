@@ -5,6 +5,7 @@ export const ErrorCode = {
   VALIDATION_ERROR: "VALIDATION_ERROR",
   INTERNAL_ERROR: "INTERNAL_ERROR",
   CONFLICT: "CONFLICT",
+  WISHLIST_ALREADY_EXISTS: "WISHLIST_ALREADY_EXISTS",
 } as const;
 
 export type ErrorCodeType = (typeof ErrorCode)[keyof typeof ErrorCode];

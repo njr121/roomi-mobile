@@ -105,7 +105,7 @@
 
 ---
 
-## 2026-06-12 | 세팅 정비 — Claude Code 설정 완료
+## 2026-06-12 | 세팅 정비
 
 ### 완료
 
@@ -113,7 +113,7 @@
   - `Write(.env*)`, `Write(prisma/migrations/*)`, `Write(**/node_modules/**)`
   - `Write(package-lock.json)`, `Write(.github/workflows/*)`
 - [x] `roomi-api/.claude/settings.local.json` — `../roomi-app/**` 도메인 차단 확인
-- [x] `CLAUDE.md` — "Claude Code 설정 파일" 섹션 추가 (실제 파일 위치·내용 기준)
+- [x] `CLAUDE.md` — 설정 파일 섹션 추가 (실제 파일 위치·내용 기준)
 - [x] 전체 문서 정합성 수정 — Google 단독 → 4-provider 인증으로 확장
   - `CLAUDE.md`, `phase3-auth.md`, `phase2-common-modules.md` 반영
 - [x] 파일명 kebab-case 통일 — `dev_log.md` → `dev-log.md`, `error_log.md` → `error-log.md` (git mv)
@@ -158,12 +158,6 @@
 - [x] callbacks.signIn — prisma.user.upsert, return true
 - [x] callbacks.jwt — token.id = user.id 저장
 - [x] callbacks.session — session.user.id = token.id 주입
-
-### Claude 직접 수정 기록
-
-- `docs/log/study-log.md` — 목차(Table of Contents) 추가
-- `docs/log/study-log.md` — 코드 작성 완료 섹션 4곳에 "직접 써봤나? ✅" 마커 추가
-  - lib/env.ts, lib/auth.ts, route.ts, types/index.ts (declare module)
 
 ### 타입 검사 에러 발생 (2026-06-12)
 
@@ -299,3 +293,156 @@ lib/auth.ts:34:11 - error TS2353
 1. `git push origin feat/api`
 2. PR #5 생성 (`feat/api → develop`)
 3. Phase 6 시작 — 찜하기 API
+
+---
+
+## 2026-06-16 | Phase 6 — 찜하기 API
+
+### 완료
+
+- [x] `docs/features/phase6-wishlist.md` 기능 정의 문서 작성
+- [x] `schema.prisma` Wishlist 모델에 `createdAt DateTime @default(now())` 추가
+- [x] `npx prisma migrate dev --name add-createdAt-to-wishlist` 성공
+  - 마이그레이션 파일: `prisma/migrations/20260616021041_add_created_at_to_wishlist/migration.sql`
+- [x] `app/api/wishlists/route.ts` — POST (찜 추가) / GET (내 목록) 완성
+  - 중복 확인 → 409 WISHLIST_ALREADY_EXISTS
+  - `orderBy: { createdAt: "desc" }` 정렬 포함
+- [x] `npx tsc --noEmit` — 오류 0개 확인
+
+### 완료 (추가)
+
+- [x] `app/api/wishlists/[accommodationId]/route.ts` — DELETE (찜 삭제) 완성
+  - `findFirst({ where: { userId, accommodationId } })` → null 시 404
+  - `delete({ where: { id: wishlist.id } })` → 삭제 후 200 반환
+- [x] `npx tsc --noEmit` — 오류 0개 확인
+
+### 기술 결정 사항
+
+- `findFirst` 사용: userId + accommodationId 조합 조건은 `findUnique`로 쓸 수 없음 (unique 필드 단독이 아님)
+- 삭제 전 `findFirst` 존재 확인 필수: Prisma `delete`는 대상 없으면 런타임 에러 발생
+
+### Phase 6 완료 ✅
+
+| 항목 | 상태 |
+|---|---|
+| POST /api/wishlists (찜 추가) | ✅ |
+| GET /api/wishlists (내 목록) | ✅ |
+| DELETE /api/wishlists/:accommodationId (찜 삭제) | ✅ |
+| schema.prisma createdAt 추가 + 마이그레이션 | ✅ |
+
+### 다음 할 것
+
+- PR #6 머지 완료 (`feat/api → develop`) — 2026-06-16
+- 다음 Phase 검토
+
+---
+
+## 2026-06-19 | Phase 12 — 모바일 인증 1~2단계
+
+### 완료
+
+- [x] `jose@^6.2.3` 설치 (명시 버전, `latest` 아님)
+- [x] `lib/env.ts`에 `MOBILE_JWT_SECRET` 검증 추가
+- [x] `app/api/auth/mobile/google/route.ts` 신규 작성
+  - `request.json()` → `idToken` 구조분해 → 없으면 400
+  - 구글 `tokeninfo` 엔드포인트로 진위 확인 → `.ok` 아니면 401
+  - `googleResponse.json()`으로 email/name 추출
+  - `prisma.user.upsert`로 회원가입/로그인 동시 처리 (`provider: "google"`)
+  - `jose`의 `SignJWT`로 `{ userId: user.id }` 서명, 만료 30일
+  - `apiSuccess({ token, user })` 응답
+- [x] `npx tsc --noEmit` 오류 0개
+
+### 기술 결정
+
+- `requireAuth()`를 이 라우트 안에서 호출하지 않음 — 이 라우트 자체가 "로그인하기 위해" 부르는 곳이라 아직 토큰이 없는 게 정상이라서 인증 체크 대상이 아님
+
+### 다음
+
+1. `lib/auth.ts`의 `requireAuth()` 확장 — 쿠키 세션 실패 시 `Authorization: Bearer <token>` 헤더도 `jose`로 검증하도록 추가
+
+### Phase 12 3단계 완료 — `requireAuth()` 확장 (2026-06-19)
+
+- [x] 쿠키 세션 있으면 `session.user.id` 즉시 반환 (기존 웹 흐름 그대로 유지)
+- [x] 쿠키 세션 없으면 `Authorization: Bearer <token>` 헤더 확인 → `jose`의 `jwtVerify`로 검증 → 통과 시 `payload.userId` 반환
+- [x] 검증 실패(헤더 없음/형식 틀림/토큰 위조·만료) 시 기존과 동일한 401 응답
+- [x] `npx tsc --noEmit` 오류 0개 확인
+
+**Phase 12 백엔드(1~3단계) 전체 완료** — 다음은 Google Cloud Console 모바일 클라이언트 ID 발급(사용자 직접) → 프론트(`authStore`, `lib/api.ts`, 로그인 화면)
+
+### 다음
+
+1. Google Cloud Console에서 모바일용 OAuth 클라이언트 ID 발급 (사용자 직접)
+2. 프론트 4단계 — `store/authStore.ts` → `lib/api.ts` 토큰 첨부 → 로그인 화면
+
+### 보류 확인 — 카카오·네이버 모바일 로그인 (2026-06-19)
+
+PRD 원래 범위는 Google·카카오·네이버 3개 소셜 로그인이다. 현재 상태 정리:
+
+- 웹(쿠키 기반) 로그인은 `lib/auth.ts`의 NextAuth 설정에 3개 provider가 Phase 3부터 이미 다 등록돼 있어 동작함
+- 오늘 만든 모바일 전용 토큰 발급 라우트(`/api/auth/mobile/google`)는 Google 1개만 구현 — `phase12-auth.md`에 "Google로 패턴 검증 후 시간 남으면 카카오·네이버 추가"로 이미 명시된 의도적 보류
+- 패턴이 검증됐으므로, 카카오·네이버 모바일 라우트는 `/api/auth/mobile/google/route.ts`를 복사해서 provider 이름과 토큰 검증 엔드포인트만 바꾸는 수준의 작업
+- 착수 시점은 일정 여유 보고 추후 결정
+
+## 2026-06-22 | Phase 7 — 검색(지역·날짜·인원) 가용성 필터 설계
+
+### 완료
+
+- [x] `docs/features/phase7-search-availability.md` 작성 완료
+
+### 기술 결정
+
+- `GET /api/accommodations`에 `region`/`checkIn`/`checkOut`/`guests` 쿼리 파라미터 추가, 기존 `page`/`limit`/`type`/`sort`는 그대로 유지
+- 날짜 검색을 실제 가용성 체크(겹치는 예약 확인)로 구현하기로 결정 — 단순 입력값 전달보다 구현량은 늘지만 사용자가 직접 선택
+- Prisma `rooms: { some: { ... } }` 관계 필터로 "조건을 만족하는 객실이 하나라도 있는 숙소"를 표현, `guests`와 날짜 조건은 같은 객실이 동시에 만족해야 함
+
+### 다음
+
+1. `app/api/accommodations/route.ts` 수정
+2. `npx tsc --noEmit` 확인
+3. 완료 후 `feat/app`으로 전환 — `SearchBar`/`FilterSheet`/`SortSelector`/`Pagination` 프론트 구현
+
+### Phase 7 구현 완료 (2026-06-22)
+
+- [x] `app/api/accommodations/route.ts` 수정 — `QuerySchema`에 `region`/`checkIn`/`checkOut`/`guests` 추가, `.refine()` 2회로 날짜 상호 검증, `roomCondition`을 분리 조립해 `rooms: { some: {...} }`로 가용성 필터 구현
+- [x] `npx tsc --noEmit` 오류 0개 확인
+
+### 수동 검증 완료 (2026-06-22)
+
+- `region=서울` → `total: 48`, `region=부산` → `total: 0` (시드 데이터가 전부 서울이라 정상)
+- `guests=2` → `total: 48`(모든 숙소가 2인실 보유), `guests=10` → `total: 0`(10인실 없음)
+- `checkIn`+`checkOut` 동시 → 정상 결과, `checkIn`만 단독 → `400 VALIDATION_ERROR` 정상
+
+### 에러 1건 해결 — `curl`로 한글 쿼리 테스트 시 `400 Bad Request`(서버 로그에도 안 남음)
+
+`curl "...?region=서울"`처럼 한글을 URL 인코딩 없이 그대로 보내면, HTTP 요청 라인은 아스키 문자만 허용하는 규격이라 Node의 HTTP 파서가 Next.js 라우트 핸들러에 도달하기도 전에 자체적으로 `400`을 반환하고 연결을 끊음(그래서 dev 서버 로그에 요청 자체가 안 찍힘). 코드 버그가 아니라 테스트 명령어 문제 — `curl -G ... --data-urlencode "region=서울"`로 curl이 자동 인코딩하게 하면 해결. 실제 앱은 `fetch`/`axios`가 자동 인코딩하므로 영향 없음
+
+**Phase 7(검색 가용성 필터) 백엔드 전체 완료**
+
+### 다음
+
+1. `feat/app`으로 전환 — `SearchBar`/`FilterSheet`/`SortSelector`/`Pagination` 프론트 구현
+
+---
+
+## 2026-06-22 | 정렬 옵션 누락 보완 — 평점 정렬
+
+### PRD 대조 중 발견
+
+`feat/app`에서 Phase 18(홈 레이아웃) 작업 중 사용자 요청으로 PRD 전체를 다시 대조한 결과, 정렬 옵션이 PRD(3번, API 명세 11.1)는 `priceChangeRate`/`currentPrice`/`rating` 3가지인데 구현은 2가지만 있던 것을 발견
+
+### 수정
+
+- `app/api/accommodations/route.ts`의 `orderBy`를 `{ [sort]: sort === "rating" ? "desc" : "asc" }`로 분기 — 평점은 "높은순"이라 내림차순 필요, 기존 가격·변동률은 그대로 오름차순 유지
+- `curl -G ... --data-urlencode "sort=rating"`로 정상 응답 확인(다만 시드 데이터의 `rating`이 전부 4.0으로 동일해서 순서 차이는 화면상 검증 불가 — 데이터 한계, 로직 자체는 정상)
+
+### 이미지 백필 스크립트 추가
+
+- 시드 데이터에 `images`가 전부 빈 배열이라 프론트 카드가 항상 회색 박스였던 문제 발견 → `prisma/backfill-images.ts` 신규(기존 행 보존, `images` 필드만 업데이트), `prisma/seed.ts`도 향후 신규 시드 대비 동기화
+- picsum.photos 서비스 장애(Cloudflare 522)로 1차 시도 실패 → `placehold.co`로 교체, 한글 텍스트는 폰트 미지원으로 깨져서 숙박 종류별 색상 블록(텍스트 없음)으로 최종 정리
+
+## 2026-06-23 | 예약 동시 생성 시 중복 발생 버그 수정
+
+### 완료
+- [x] `app/api/bookings/route.ts` POST — 충돌 조회와 예약 생성을 `prisma.$transaction()`(Serializable 격리수준)으로 묶어서 레이스 컨디션 제거(상세는 error-log.md 260623 항목 참고)
+- [x] 동시 요청 2개로 직접 검증 — 하나만 200, 하나는 409
+- [x] `npx tsc --noEmit` 오류 0개
