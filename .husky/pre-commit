@@ -1,1 +1,1 @@
-cd roomi-app && npx tsc --noEmit
+cd roomi-api && npx tsc --noEmit && cd ../roomi-app && npx tsc --noEmit
