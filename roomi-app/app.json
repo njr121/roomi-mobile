@@ -5,7 +5,7 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "roomiapp",
+    "scheme": ["roomiapp", "com.googleusercontent.apps.893066227269-e6curst6m37dgbeangl38eu88tq2iglc"],
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
