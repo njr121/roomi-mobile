@@ -1,19 +1,21 @@
-import { useRef } from "react";
-import { ScrollView, Text, View, Pressable, Image } from "react-native";
+import { useRef, useState } from "react";
+import { ScrollView, Text, View, Pressable, Image, NativeSyntheticEvent, NativeScrollEvent, Dimensions } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useAccommodationDetail } from "@/hooks/useAccommodationDetail";
 import { PriceBlock } from "@/components/PriceBlock";
 import { WishlistButton } from "@/components/WishlistButton";
 import { BottomTabBar } from "@/components/BottomTabBar";
-import { ScrollJumpButtons } from "@/components/ScrollJumpButtons";
 import { AppHeader } from "@/components/AppHeader";
-import { getTypeImage } from "@/lib/typeImages";
+import { getTypeImages } from "@/lib/typeImages";
+
+const SCREEN_WIDTH = Dimensions.get("window").width;
 
 export default function AccommodationDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data, isLoading, isError } = useAccommodationDetail(id);
   const scrollRef = useRef<ScrollView>(null);
+  const [imageIndex, setImageIndex] = useState(0);
 
   if (isLoading) {
     return (
@@ -37,12 +39,33 @@ export default function AccommodationDetailScreen() {
     <View className="flex-1">
       <AppHeader variant="title" title={data.name} showBack />
       <ScrollView ref={scrollRef} className="flex-1 bg-white">
-      <View className="bg-gray-200" style={{ height: 224, maxWidth: "100%" }}>
-        <Image
-          source={getTypeImage(data.type, data.id)}
-          resizeMode="cover"
-          style={{ maxWidth: "100%", width: "100%", height: "100%" }}
-        />
+      <View className="bg-gray-200" style={{ height: 224, width: SCREEN_WIDTH }}>
+        <ScrollView
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          onMomentumScrollEnd={(e: NativeSyntheticEvent<NativeScrollEvent>) => {
+            const index = Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH);
+            setImageIndex(index);
+          }}
+        >
+          {getTypeImages(data.type).map((image, index) => (
+            <Image
+              key={index}
+              source={image}
+              resizeMode="cover"
+              style={{ width: SCREEN_WIDTH, height: 224 }}
+            />
+          ))}
+        </ScrollView>
+        <View className="absolute bottom-2 w-full flex-row justify-center gap-1.5">
+          {getTypeImages(data.type).map((_, index) => (
+            <View
+              key={index}
+              className={`h-1.5 w-1.5 rounded-full ${index === imageIndex ? "bg-white" : "bg-white/50"}`}
+            />
+          ))}
+        </View>
       </View>
 
       <View className="px-4 py-4">
@@ -90,11 +113,6 @@ export default function AccommodationDetailScreen() {
         ))}
       </View>
       </ScrollView>
-      <ScrollJumpButtons
-        bottomOffset={76}
-        onScrollToTop={() => scrollRef.current?.scrollTo({ y: 0, animated: true })}
-        onScrollToBottom={() => scrollRef.current?.scrollToEnd({ animated: true })}
-      />
       <BottomTabBar />
     </View>
   );

@@ -38,3 +38,7 @@ export function getTypeImage(type: string, id?: string) {
   if (!id) return images[0];
   return images[hashString(id) % images.length];
 }
+
+export function getTypeImages(type: string) {
+  return TYPE_IMAGES[type as keyof typeof TYPE_IMAGES] ?? [];
+}

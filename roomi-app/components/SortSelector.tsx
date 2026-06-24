@@ -15,10 +15,10 @@ const SORT_OPTIONS: { label: string; value: SortValue }[] = [
 
 export function SortSelector({ value, onChange }: SortSelectorProps) {
   return (
-    <View className="flex-row gap-4 px-4 py-2">
+    <View className="flex-row gap-4 px-4 pt-4 pb-2">
       {SORT_OPTIONS.map((option) => (
-        <Pressable key={option.value} onPress={() => onChange(option.value)}>
-          <Text className={`text-sm font-bold ${value === option.value ? "text-black" : "text-gray-500"}`}>
+        <Pressable key={option.value} onPress={() => onChange(option.value)} className="py-1">
+          <Text className={`text-base font-bold ${value === option.value ? "text-black" : "text-gray-500"}`}>
             {option.label}
           </Text>
         </Pressable>

@@ -14,7 +14,7 @@ export function WishlistButton({ accommodationId }: WishlistButtonProps) {
   const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
   const queryClient = useQueryClient();
   const { data } = useWishlists();
-  const isWishlisted = data?.some((item) => item.accommodationId === accommodationId) ?? false;
+  const isWishlisted = isLoggedIn && (data?.some((item) => item.accommodationId === accommodationId) ?? false);
 
   const { mutate, isPending } = useMutation({
     mutationFn: async () => {

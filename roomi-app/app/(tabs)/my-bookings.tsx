@@ -33,8 +33,8 @@ function BookingRow({ booking }: { booking: BookingWithDetails }) {
   };
 
   return (
-    <View className="mx-4 mb-4 rounded-lg bg-white shadow-md shadow-black/20">
-      <View className="h-36 flex-row overflow-hidden rounded-lg">
+    <View className="mx-4 mb-4 rounded-lg bg-white shadow-md shadow-black/40">
+      <View className="h-40 flex-row overflow-hidden rounded-lg">
         <View className="bg-gray-200" style={{ width: 112, maxWidth: "100%" }}>
           <Image
             source={getTypeImage(booking.room.accommodation.type, booking.room.accommodation.id)}
@@ -42,7 +42,7 @@ function BookingRow({ booking }: { booking: BookingWithDetails }) {
             style={{ maxWidth: "100%", width: "100%", height: "100%" }}
           />
         </View>
-        <View className="flex-1 px-3 py-3">
+        <View className="flex-1 px-3 py-2">
         <View className="mb-1 flex-row items-center justify-between">
           <Text className="font-bold">{booking.room.accommodation.name}</Text>
           <View className={`rounded-full px-2 py-0.5 ${isCancelled ? "bg-gray-200" : "bg-sky-100"}`}>
@@ -55,7 +55,7 @@ function BookingRow({ booking }: { booking: BookingWithDetails }) {
         <Text className="text-sm text-gray-500">
           {booking.checkIn.slice(0, 10)} ~ {booking.checkOut.slice(0, 10)} · {booking.guests}명
         </Text>
-        <Text className="mb-2 font-bold">{booking.totalPrice.toLocaleString()}원</Text>
+        <Text className="mb-1 font-bold">{booking.totalPrice.toLocaleString()}원</Text>
 
         <Pressable
           disabled={isCancelled || isPending}

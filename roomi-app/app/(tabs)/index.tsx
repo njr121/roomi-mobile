@@ -1,11 +1,10 @@
 import { useMemo, useRef, useState } from "react";
-import { FlatList, Text, View, Pressable, Modal } from "react-native";
+import { FlatList, Text, View, Pressable } from "react-native";
 import { Link, router } from "expo-router";
 import { AppHeader } from "@/components/AppHeader";
 import { AccommodationCard } from "@/components/AccommodationCard";
 import { AccommodationCarousel } from "@/components/AccommodationCarousel";
 import { WishlistButton } from "@/components/WishlistButton";
-import { SearchBar } from "@/components/SearchBar";
 import { CategoryIcons } from "@/components/CategoryIcons";
 import { SortSelector } from "@/components/SortSelector";
 import { ScrollJumpButtons } from "@/components/ScrollJumpButtons";
@@ -16,7 +15,6 @@ export default function HomeScreen() {
   const [filters, setFilters] = useState<AccommodationFilters>({
     sort: "currentPrice",
   });
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const listRef = useRef<FlatList>(null);
 
   const { data, isLoading, isError, fetchNextPage, hasNextPage, isFetchingNextPage } =
@@ -33,7 +31,7 @@ export default function HomeScreen() {
 
   return (
     <View className="flex-1">
-      <AppHeader variant="search" onSearchPress={() => setIsSearchOpen(true)} />
+      <AppHeader variant="search" onSearchPress={() => router.push("/search-modal")} />
 
       {isLoading && <Text className="px-4">불러오는 중...</Text>}
       {isError && <Text className="px-4">데이터를 불러오지 못했습니다.</Text>}
@@ -92,28 +90,6 @@ export default function HomeScreen() {
           onScrollToBottom={() => listRef.current?.scrollToEnd({ animated: true })}
         />
       )}
-
-      <Modal visible={isSearchOpen} animationType="slide">
-        <View className="flex-1 bg-white pt-3">
-          <Pressable onPress={() => setIsSearchOpen(false)} className="self-start px-4 pb-2">
-            <Text className="text-2xl text-gray-600">✕</Text>
-          </Pressable>
-          <SearchBar
-            onSearch={(values) => {
-              setIsSearchOpen(false);
-              router.push({
-                pathname: "/search-results",
-                params: {
-                  region: values.region ?? "",
-                  checkIn: values.checkIn ?? "",
-                  checkOut: values.checkOut ?? "",
-                  guests: values.guests ? String(values.guests) : "",
-                },
-              });
-            }}
-          />
-        </View>
-      </Modal>
     </View>
   );
 }

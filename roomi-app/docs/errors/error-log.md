@@ -927,3 +927,80 @@ Expo Go로 실제 폰에서 확인하니 화면 상단·하단이 잘려 보임.
 - Expo Go(범용 플레이어)와 커스텀 빌드(앱 전용 실행파일)는 "같은 코드, 다른 실행 방식"이고, OAuth처럼 앱 고유 식별이 필요한 기능은 후자에서만 정상적으로 검증 가능한 경우가 있다
 
 ---
+
+## 2026-06-24 | EAS Build 실패 — `react-native-worklets:assertMinimalReactNativeVersionTask`
+
+### 에러 메시지
+
+```
+Execution failed for task ':react-native-worklets:assertMinimalReactNativeVersionTask'.
+> [Worklets] React Native 0.76.9 version is not compatible with Worklets 0.5.1
+```
+
+### 원인 조사 과정
+
+1. `nativewind`의 내부 의존 패키지 `react-native-css-interop`의 babel 설정(`babel.js`)이 Reanimated 버전과 무관하게 `"react-native-worklets/plugin"`을 babel 플러그인 목록에 무조건 포함시키고 있음을 확인(`node_modules/react-native-css-interop/babel.js`)
+2. 이 프로젝트는 `react-native-reanimated@3.x`를 쓰고 있어 `react-native-worklets`(Reanimated 4.x 전용 네이티브 패키지) 자체가 필요 없는데, 위 1번 때문에 Metro 번들링 시점에 이 모듈을 찾으려 시도함
+3. 패키지를 다시 설치해서 번들링은 해결됐지만, 네이티브 Android 빌드(Gradle) 단계에서 `react-native-worklets`의 버전 호환성 검사(`compatibility.json`)에 걸림 — 확인 결과 해당 패키지의 모든 배포 버전(0.4.x~0.5.x)이 React Native 0.78 이상만 지원, 0.76은 지원 대상 자체가 아님
+4. Expo의 네이티브 오토링킹 제외 설정(`app.json`의 `expo.autolinking.exclude`)을 시도했으나 이 SDK 버전의 빌드 파이프라인에서는 읽히지 않는 설정이라 효과 없음(시행착오로 확인)
+
+### 해결
+
+`react-native-worklets`는 의존성에서 완전히 제거하고, `patch-package`로 `react-native-css-interop`의 `babel.js`에서 `"react-native-worklets/plugin"` 줄만 직접 제거하는 패치(`patches/react-native-css-interop+0.2.5.patch`)를 적용. 이 프로젝트의 Reanimated 3.x babel 플러그인은 `babel.config.js`에 이미 별도로 등록되어 있어 기능상 영향 없음.
+
+### 교훈
+
+- 라이브러리 내부 설정이 "더 최신 버전에서만 필요한 의존성"을 조건 없이 요구하는 경우가 있다 — 에러 메시지에 나온 패키지를 그냥 설치하기 전에, 그 패키지가 실제로 현재 프로젝트의 버전 조합과 호환되는지 먼저 확인해야 한다
+- Expo의 설정 키가 문서/이름상 존재해도 실제로 현재 SDK 버전의 빌드 파이프라인에 연결되어 있는지는 별개 문제 — 적용 후 반드시 재현 테스트로 효과를 확인해야 한다
+- `node_modules` 내부 파일을 직접 고치면 재설치 시 사라지므로, `patch-package`로 패치 파일을 저장소에 커밋해서 재현 가능하게 만드는 게 정석
+
+---
+
+## 2026-06-24 | 실기기 커스텀 빌드에서 "Cannot find native module 'ExpoCrypto'"
+
+### 에러 메시지
+
+```
+Error: Cannot find native module 'ExpoCrypto'
+```
+
+### 원인
+
+`expo-crypto`가 `package.json`에 직접 의존성으로 없고, `expo-auth-session`의 하위 의존성으로만 존재. 이전 EAS Build 시점에 네이티브 모듈로 포함되지 않아서, 빌드된 APK에 해당 네이티브 모듈이 빠진 상태로 설치됨.
+
+### 해결
+
+`expo-crypto`를 직접 의존성으로 추가한 뒤 EAS Build를 다시 실행. 네이티브 모듈 추가는 JS 리로드로 반영되지 않고 새 빌드가 필요함.
+
+### 교훈
+
+하위 의존성으로만 깔려 있는 네이티브 모듈은 오토링킹에서 누락될 수 있다 — 코드에서 직접 `import`해서 쓰는 네이티브 모듈 패키지는 항상 최상위 의존성으로 명시하는 게 안전하다.
+
+---
+
+## 2026-06-24 | 실기기 커스텀 빌드에서 Google 로그인 400 — Android OAuth 클라이언트 전환 과정
+
+### 증상 흐름 (3단계로 원인이 바뀜)
+
+1. **1단계**: 기존 "웹 애플리케이션" OAuth 클라이언트로 로그인 시도 → `400: invalid_request`. Google 계정 로그인 화면까지는 뜨지만 승인 직전에 차단됨
+2. **2단계**: Google Cloud Console에 패키지명(`com.roomi.app`) + 서명 인증서 SHA-1로 "Android" 타입 OAuth 클라이언트를 신규 생성하고 코드에서 플랫폼별로 분기(`Platform.OS === "web"`이면 기존 웹 클라이언트, 아니면 신규 Android 클라이언트)했지만 여전히 같은 에러 — 응답 방식이 `response_type=id_token`(암묵적 흐름)이었는데, Google이 네이티브 앱(Android/iOS 클라이언트)에는 이 방식을 막고 있었음
+3. **3단계**: `response_type=code` + PKCE(Authorization Code Flow)로 변경 후 재시도 → 에러 세부 정보에 `redirect_uri=roomiapp://`가 찍히며 거부됨. Android 클라이언트는 임의의 커스텀 스킴이 아니라 `com.googleusercontent.apps.<클라이언트ID>:/oauth2redirect` 형식의 리디렉션 주소만 인식한다는 걸 확인하고 수정
+4. **4단계**: 형식을 맞춘 뒤에도 "Custom URI scheme is not enabled for your Android client" 에러 — Google Cloud Console의 해당 Android 클라이언트 설정에서 커스텀 URI 스킴 사용을 명시적으로 켜는 옵션을 활성화해서 최종 해결
+
+### 원인 요약
+
+Android/iOS 타입의 OAuth 클라이언트는 웹 클라이언트와 인증 방식·리디렉션 검증 방식이 근본적으로 다르다(리디렉션 URI 화이트리스트 대신 패키지명+서명 검증, 암묵적 흐름 대신 Authorization Code+PKCE 강제, 커스텀 URI 스킴은 별도 옵트인 필요). 단순히 클라이언트 ID만 교체해서는 해결되지 않고, 인증 흐름 자체와 앱의 URL 스킴 등록(`app.json`의 `scheme`), Google Console 설정까지 같이 맞춰야 했다.
+
+### 해결
+
+- `app/login.tsx`: `responseType: Code`, `usePKCE: true`로 변경 후 `AuthSession.exchangeCodeAsync`로 코드를 토큰으로 교환
+- `app.json`의 `scheme`을 배열로 바꿔 `com.googleusercontent.apps.<클라이언트ID>` 스킴 추가(네이티브 빌드 1회 필요)
+- 로그인 콜백 직후 잠깐 보이는 "Unmatched Route" 화면 방지를 위해 `app/oauth2redirect.tsx` 빈 라우트 추가
+- Google Cloud Console에서 해당 Android 클라이언트의 커스텀 URI 스킴 옵션 활성화
+
+### 교훈
+
+- OAuth 에러 메시지가 매 단계 다르게 나오는 건 같은 버그가 아니라 단계별로 다른 원인이 새로 드러나는 것 — 각 단계의 에러 문구(`invalid_request`의 세부정보, 차단 사유 텍스트)를 끝까지 읽으면 다음에 뭘 고쳐야 하는지가 그 안에 들어있다
+- 네이티브 앱용 OAuth 클라이언트는 웹 클라이언트의 설정을 그대로 재사용할 수 없고, 인증 흐름(Authorization Code+PKCE)과 리디렉션 형식 둘 다 플랫폼 전용 규칙을 따라야 한다
+
+---

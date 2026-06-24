@@ -26,7 +26,7 @@ export function AppHeader(props: AppHeaderProps) {
           </Pressable>
           <Pressable
             onPress={props.onSearchPress}
-            className="ml-3 h-12 flex-1 flex-row items-center justify-between rounded-lg border border-gray-300 px-3"
+            className="ml-3 h-14 flex-1 flex-row items-center justify-between rounded-lg border border-gray-300 px-3"
           >
             <Text className="text-lg text-gray-400">어디로 가시나요?</Text>
             <MaterialIcons name="search" size={24} color="#9ca3af" />
