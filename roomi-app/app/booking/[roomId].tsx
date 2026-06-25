@@ -63,6 +63,9 @@ export default function BookingScreen() {
     }
   };
 
+  const nights = checkIn && checkOut ? (new Date(checkOut).getTime() - new Date(checkIn).getTime()) / (1000 * 60 * 60 * 24) : 0;
+  const totalPrice = nights * Number(price);
+
   const notify = (title: string, message: string) => {
     if (Platform.OS === "web") {
       window.alert(`${title}\n${message}`);
@@ -103,16 +106,16 @@ export default function BookingScreen() {
           체크인: {checkIn ?? "선택 안 함"} / 체크아웃: {checkOut ?? "선택 안 함"}
         </Text>
 
+        {checkIn && checkOut && (
+          <Text className="mb-2 font-bold">
+            {Number(price).toLocaleString()}원 x {nights}박 = {totalPrice.toLocaleString()}원
+          </Text>
+        )}
+
         <DateRangeCalendar checkIn={checkIn} checkOut={checkOut} onDayPress={onDayPress} />
 
         <Text className="mb-1 mt-4">인원</Text>
-        <Controller
-          control={control}
-          name="guests"
-          render={({ field: { onChange, value } }) => (
-            <GuestSelector max={Number(maxGuests)} value={value} onChange={onChange} />
-          )}
-        />
+        <Controller control={control} name="guests" render={({ field: { onChange, value } }) => <GuestSelector max={Number(maxGuests)} value={value} onChange={onChange} />} />
         {errors.guests && <Text className="mb-2 text-red-500">{errors.guests.message}</Text>}
 
         <GradientButton label={isSubmitting ? "예약 중..." : "예약하기"} disabled={isSubmitting} onPress={handleSubmit(onSubmit)} className="mt-6" />
