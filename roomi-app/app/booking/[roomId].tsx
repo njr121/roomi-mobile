@@ -12,12 +12,19 @@ import { AppHeader } from "@/components/AppHeader";
 
 function createGuestsFormSchema(maxGuests: number) {
   return z.object({
-    guests: z.coerce
-      .number()
-      .int()
-      .min(1, "1명 이상이어야 합니다")
-      .max(maxGuests, `최대 ${maxGuests}명까지 가능합니다`),
+    guests: z.coerce.number().int().min(1, "1명 이상이어야 합니다").max(maxGuests, `최대 ${maxGuests}명까지 가능합니다`),
   });
+}
+
+function getDateBetween(start: string, end: string): string[] {
+  const dates = [];
+  const last = new Date(end);
+
+  for (let current = new Date(start); current <= last; current.setDate(current.getDate() + 1)) {
+    dates.push(current.toISOString().split("T")[0]);
+  }
+
+  return dates;
 }
 
 type GuestsFormValues = z.infer<ReturnType<typeof createGuestsFormSchema>>;
@@ -67,10 +74,15 @@ export default function BookingScreen() {
 
   const markedDates =
     checkIn && checkOut
-      ? {
-          [checkIn]: { startingDay: true, color: "#0ea5e9", textColor: "white" },
-          [checkOut]: { endingDay: true, color: "#0ea5e9", textColor: "white" },
-        }
+      ? getDateBetween(checkIn, checkOut).reduce<Record<string, object>>((acc, date, index, all) => {
+          acc[date] = {
+            startingDay: index === 0,
+            endingDay: index === all.length - 1,
+            color: "#0ea5e9",
+            textColor: "white",
+          };
+          return acc;
+        }, {})
       : checkIn
         ? { [checkIn]: { startingDay: true, endingDay: true, color: "#0ea5e9", textColor: "white" } }
         : {};
@@ -107,42 +119,27 @@ export default function BookingScreen() {
     <View className="flex-1">
       <AppHeader variant="title" title="예약하기" showBack />
       <ScrollView className="flex-1 bg-white px-4 py-4" contentContainerStyle={{ paddingBottom: 24 }}>
-      <Text className="mb-4 text-lg font-bold">
-        {roomName} · {price}원/박 · 최대 {maxGuests}명
-      </Text>
+        <Text className="mb-4 text-lg font-bold">
+          {roomName} · {price}원/박 · 최대 {maxGuests}명
+        </Text>
 
-      <Text className="mb-2">
-        체크인: {checkIn ?? "선택 안 함"} / 체크아웃: {checkOut ?? "선택 안 함"}
-      </Text>
+        <Text className="mb-2">
+          체크인: {checkIn ?? "선택 안 함"} / 체크아웃: {checkOut ?? "선택 안 함"}
+        </Text>
 
-      <Calendar
-        minDate={new Date().toISOString().split("T")[0]}
-        markingType="period"
-        markedDates={markedDates}
-        onDayPress={onDayPress}
-      />
+        <Calendar minDate={new Date().toISOString().split("T")[0]} markingType="period" markedDates={markedDates} onDayPress={onDayPress} />
 
-      <Text className="mb-1 mt-4">인원</Text>
-      <Controller
-        control={control}
-        name="guests"
-        render={({ field: { onChange, value } }) => (
-          <TextInput
-            className="mb-1 rounded-lg border border-gray-300 px-3 py-2"
-            keyboardType="number-pad"
-            value={String(value)}
-            onChangeText={(text) => onChange(Number(text) || 0)}
-          />
-        )}
-      />
-      {errors.guests && <Text className="mb-2 text-red-500">{errors.guests.message}</Text>}
+        <Text className="mb-1 mt-4">인원</Text>
+        <Controller
+          control={control}
+          name="guests"
+          render={({ field: { onChange, value } }) => (
+            <TextInput className="mb-1 rounded-lg border border-gray-300 px-3 py-2" keyboardType="number-pad" value={String(value)} onChangeText={(text) => onChange(Number(text) || 0)} />
+          )}
+        />
+        {errors.guests && <Text className="mb-2 text-red-500">{errors.guests.message}</Text>}
 
-      <GradientButton
-        label={isSubmitting ? "예약 중..." : "예약하기"}
-        disabled={isSubmitting}
-        onPress={handleSubmit(onSubmit)}
-        className="mt-6"
-      />
+        <GradientButton label={isSubmitting ? "예약 중..." : "예약하기"} disabled={isSubmitting} onPress={handleSubmit(onSubmit)} className="mt-6" />
       </ScrollView>
     </View>
   );
