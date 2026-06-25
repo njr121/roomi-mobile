@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { View, Text, TextInput, Alert, Platform, ScrollView } from "react-native";
+import { View, Text, Alert, Platform, ScrollView } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -10,6 +10,7 @@ import { useAuthStore } from "@/store/authStore";
 import { GradientButton } from "@/components/GradientButton";
 import { AppHeader } from "@/components/AppHeader";
 import { DateRangeCalendar } from "@/components/DateRangeCalendar";
+import { GuestSelector } from "@/components/GuestSelector";
 
 function createGuestsFormSchema(maxGuests: number) {
   return z.object({
@@ -109,7 +110,7 @@ export default function BookingScreen() {
           control={control}
           name="guests"
           render={({ field: { onChange, value } }) => (
-            <TextInput className="mb-1 rounded-lg border border-gray-300 px-3 py-2" keyboardType="number-pad" value={String(value)} onChangeText={(text) => onChange(Number(text) || 0)} />
+            <GuestSelector max={Number(maxGuests)} value={value} onChange={onChange} />
           )}
         />
         {errors.guests && <Text className="mb-2 text-red-500">{errors.guests.message}</Text>}

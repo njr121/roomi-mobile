@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { View, Text, TextInput, Pressable, Modal } from "react-native";
+import { View, Text, Pressable, Modal } from "react-native";
 import { DateData } from "react-native-calendars";
 import { GradientButton } from "./GradientButton";
 import { DateRangeCalendar } from "./DateRangeCalendar";
+import { GuestSelector } from "./GuestSelector";
 
 type SearchValues = {
   region?: string;
@@ -12,6 +13,7 @@ type SearchValues = {
 };
 
 const REGIONS = ["서울", "부산", "인천", "강원", "경주", "제주"];
+const MAX_SEARCH_GUESTS = 6;
 
 type SearchBarProps = {
   onSearch: (values: SearchValues) => void;
@@ -19,7 +21,7 @@ type SearchBarProps = {
 
 export function SearchBar({ onSearch }: SearchBarProps) {
   const [region, setRegion] = useState("");
-  const [guests, setGuests] = useState("");
+  const [guests, setGuests] = useState<number | null>(null);
   const [checkIn, setCheckIn] = useState<string | null>(null);
   const [checkOut, setCheckOut] = useState<string | null>(null);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
@@ -44,7 +46,7 @@ export function SearchBar({ onSearch }: SearchBarProps) {
       region: region || undefined,
       checkIn: checkIn ?? undefined,
       checkOut: checkOut ?? undefined,
-      guests: guests ? Number(guests) : undefined,
+      guests: guests ?? undefined,
     });
   };
 
@@ -58,7 +60,7 @@ export function SearchBar({ onSearch }: SearchBarProps) {
         <Text>{checkIn && checkOut ? `${checkIn} ~ ${checkOut}` : "체크인 · 체크아웃 선택"}</Text>
       </Pressable>
 
-      <TextInput className="rounded-lg border border-gray-300 px-3 py-2" placeholder="인원" keyboardType="number-pad" value={guests} onChangeText={setGuests} />
+      <GuestSelector max={MAX_SEARCH_GUESTS} value={guests} onChange={setGuests} />
 
       <GradientButton label="검색" onPress={handleSearch} />
 
