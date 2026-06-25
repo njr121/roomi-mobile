@@ -984,3 +984,71 @@ Android/iOS 타입의 OAuth 클라이언트는 웹 클라이언트와 인증 방
 - 네이티브 앱용 OAuth 클라이언트는 웹 클라이언트의 설정을 그대로 재사용할 수 없고, 인증 흐름(Authorization Code+PKCE)과 리디렉션 형식 둘 다 플랫폼 전용 규칙을 따라야 한다
 
 ---
+
+## 2026-06-24 | Vercel 정적 배포에서 아이콘 폰트가 전부 404 (`assets/node_modules` 경로 누락)
+
+### 증상
+
+웹 빌드(`npx expo export -p web`)를 Vercel에 배포한 뒤 모든 아이콘(하트, 별, 화살표, 하단 탭 아이콘 등)이 빈 사각형으로 깨짐.
+
+### 원인
+
+`@expo/vector-icons` 등 일부 패키지의 폰트·이미지 에셋은 웹 빌드 시 원래 위치(`node_modules/...`)를 그대로 반영한 `assets/node_modules/...` 경로로 `dist`에 복사된다. Vercel은 배포 시 실제 npm 의존성 폴더가 아니더라도 **경로에 `node_modules`라는 이름이 포함된 디렉터리를 항상 제외**하기 때문에(`.vercelignore`로도 끌 수 없는 내장 규칙), 이 에셋들이 통째로 안 올라감.
+
+### 해결
+
+`dist` 폴더에서 `assets/node_modules` 디렉터리를 다른 이름(`assets/vendor`)으로 변경하고, 그 경로를 참조하는 JS 번들 파일 안의 문자열도 같은 이름으로 치환. `npx expo export`를 다시 실행할 때마다 `dist`가 새로 생성되므로 매번 다시 적용해야 함.
+
+### 교훈
+
+배포 플랫폼의 "항상 제외" 규칙은 실제 의도(써드파티 패키지 제외)와 무관하게 **이름만으로 경로를 매칭**하는 경우가 있다 — 빌드 산물 안에 우연히 같은 이름의 폴더가 생기면 똑같이 영향을 받는다. `.vercelignore` 같은 설정 파일로 우회가 안 될 때는, 그 설정이 "항상 적용되는 플랫폼 내장 규칙"인지부터 확인해야 한다.
+
+---
+
+## 2026-06-24 | Vercel 정적 배포에서 `/login` 등 확장자 없는 경로가 404
+
+### 증상
+
+앱 안에서 화면 이동(클라이언트 사이드 라우팅)으로는 `/login`, `/my-bookings` 등이 멀쩡히 보이는데, 브라우저 주소창에 그 경로를 직접 입력하거나 외부(구글 로그인 리디렉션 등)에서 그 경로로 실제 서버 요청이 오면 404가 남.
+
+### 원인
+
+Expo Router의 정적 웹 내보내기(`output: "static"`)는 화면별로 `login.html`, `my-bookings.html` 같은 개별 HTML 파일을 만든다. 앱 안에서의 이동은 자바스크립트가 화면만 바꿔치기하는 것이라 실제 서버 요청이 없어서 문제가 안 드러나지만, 새로고침이나 외부 리디렉션처럼 **진짜 서버 요청**이 오면 Vercel의 기본 정적 파일 서버는 `/login`이라는 이름의 파일이나 폴더를 못 찾아서 404를 낸다(`.html` 확장자가 붙은 실제 파일명과 요청 경로가 다름).
+
+### 해결
+
+`dist` 폴더에 `vercel.json`을 추가해 `cleanUrls` 옵션을 켬:
+```json
+{ "cleanUrls": true }
+```
+이 옵션이 켜지면 Vercel이 `/login` 요청을 받았을 때 `/login.html` 파일이 있는지 자동으로 확인해서 그걸 대신 응답한다.
+
+### 교훈
+
+정적 사이트에서 "이 화면 안에서는 잘 보인다"는 클라이언트 사이드 라우팅이 잘 동작한다는 뜻일 뿐, **서버가 그 경로를 직접 처리할 수 있다는 보장은 아니다**. 외부 서비스(OAuth 리디렉션 등)가 그 경로로 직접 들어오는 경우까지 감안해서 별도로 확인해야 한다.
+
+---
+
+## 2026-06-24 | 웹 Google 로그인 토큰 교환 실패 — `client_secret is missing`
+
+### 에러 메시지
+
+```
+POST https://oauth2.googleapis.com/token 400 (Bad Request)
+TokenError: The request is missing a required parameter, ...
+More info: client_secret is missing.
+```
+
+### 원인
+
+Google의 OAuth 클라이언트는 두 종류로 나뉜다 — "Android"/"iOS" 같은 네이티브 클라이언트는 PKCE만으로 인증되는 퍼블릭(public) 클라이언트지만, **"웹 애플리케이션" 타입은 컨피덴셜(confidential) 클라이언트로 분류되어 Authorization Code를 토큰으로 교환할 때 항상 `client_secret`을 요구**한다. 같은 코드(Authorization Code + PKCE)를 네이티브와 웹에 동일하게 적용했는데, 네이티브 클라이언트 기준으로는 시크릿이 필요 없어서 문제가 없었지만 웹 클라이언트에는 그대로 적용이 안 됐다.
+
+### 해결
+
+`client_secret`을 프론트엔드 코드에 노출하는 방법은 보안상 제외하고, **웹은 시크릿이 필요 없는 암묵적 흐름(`response_type=id_token`)으로 별도 분기**. 네이티브(Android)만 Authorization Code + PKCE를 유지. 두 흐름을 플랫폼별로 나눠서 처리하는 공유 훅(`hooks/useGoogleAuth.ts`)으로 정리.
+
+### 교훈
+
+OAuth 클라이언트 타입(Web/Android/iOS/Desktop)마다 허용되는 인증 흐름과 보안 요구사항이 다르다 — 한 플랫폼에서 동작을 확인했다고 다른 플랫폼에도 같은 방식이 그대로 적용된다고 가정하면 안 된다. 클라이언트 타입별로 "이 흐름이 정말 지원되는지"를 따로 확인해야 한다.
+
+---

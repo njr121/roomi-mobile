@@ -7,6 +7,9 @@ type AuthState = {
   user: User | null;
   isLoggedIn: boolean;
   isRestoring: boolean;
+  googleAuthReady: boolean;
+  promptGoogleLogin: () => void;
+  setGoogleAuth: (ready: boolean, prompt: () => void) => void;
   login: (token: string, user: User) => Promise<void>;
   logout: () => Promise<void>;
   restore: () => Promise<void>;
@@ -17,6 +20,12 @@ export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   isLoggedIn: false,
   isRestoring: true,
+  googleAuthReady: false,
+  promptGoogleLogin: () => {},
+
+  setGoogleAuth: (ready, prompt) => {
+    set({ googleAuthReady: ready, promptGoogleLogin: prompt });
+  },
 
   login: async (token, user) => {
     await Storage.setItem("token", token);

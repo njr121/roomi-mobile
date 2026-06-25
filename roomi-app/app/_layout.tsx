@@ -8,6 +8,7 @@ import "react-native-reanimated";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useAuthStore } from "@/store/authStore";
+import { useGoogleAuth } from "@/hooks/useGoogleAuth";
 import { SplashScreen } from "@/components/SplashScreen";
 
 export const unstable_settings = {
@@ -20,6 +21,8 @@ export default function RootLayout() {
   const colorScheme = useColorScheme();
   const restore = useAuthStore((state) => state.restore);
   const [showSplash, setShowSplash] = useState(true);
+
+  useGoogleAuth();
 
   useEffect(() => {
     restore();
