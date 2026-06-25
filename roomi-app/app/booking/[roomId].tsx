@@ -4,27 +4,17 @@ import { useLocalSearchParams, router } from "expo-router";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Calendar, DateData } from "react-native-calendars";
+import { DateData } from "react-native-calendars";
 import { createBooking } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
 import { GradientButton } from "@/components/GradientButton";
 import { AppHeader } from "@/components/AppHeader";
+import { DateRangeCalendar } from "@/components/DateRangeCalendar";
 
 function createGuestsFormSchema(maxGuests: number) {
   return z.object({
     guests: z.coerce.number().int().min(1, "1명 이상이어야 합니다").max(maxGuests, `최대 ${maxGuests}명까지 가능합니다`),
   });
-}
-
-function getDateBetween(start: string, end: string): string[] {
-  const dates = [];
-  const last = new Date(end);
-
-  for (let current = new Date(start); current <= last; current.setDate(current.getDate() + 1)) {
-    dates.push(current.toISOString().split("T")[0]);
-  }
-
-  return dates;
 }
 
 type GuestsFormValues = z.infer<ReturnType<typeof createGuestsFormSchema>>;
@@ -72,21 +62,6 @@ export default function BookingScreen() {
     }
   };
 
-  const markedDates =
-    checkIn && checkOut
-      ? getDateBetween(checkIn, checkOut).reduce<Record<string, object>>((acc, date, index, all) => {
-          acc[date] = {
-            startingDay: index === 0,
-            endingDay: index === all.length - 1,
-            color: "#0ea5e9",
-            textColor: "white",
-          };
-          return acc;
-        }, {})
-      : checkIn
-        ? { [checkIn]: { startingDay: true, endingDay: true, color: "#0ea5e9", textColor: "white" } }
-        : {};
-
   const notify = (title: string, message: string) => {
     if (Platform.OS === "web") {
       window.alert(`${title}\n${message}`);
@@ -127,7 +102,7 @@ export default function BookingScreen() {
           체크인: {checkIn ?? "선택 안 함"} / 체크아웃: {checkOut ?? "선택 안 함"}
         </Text>
 
-        <Calendar minDate={new Date().toISOString().split("T")[0]} markingType="period" markedDates={markedDates} onDayPress={onDayPress} />
+        <DateRangeCalendar checkIn={checkIn} checkOut={checkOut} onDayPress={onDayPress} />
 
         <Text className="mb-1 mt-4">인원</Text>
         <Controller
