@@ -1,22 +1,20 @@
 import { useEffect, useMemo, useState } from "react";
-import { View, Text, TextInput, Alert, Platform, ScrollView } from "react-native";
+import { View, Text, Alert, Platform, ScrollView } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Calendar, DateData } from "react-native-calendars";
+import { DateData } from "react-native-calendars";
 import { createBooking } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
 import { GradientButton } from "@/components/GradientButton";
 import { AppHeader } from "@/components/AppHeader";
+import { DateRangeCalendar } from "@/components/DateRangeCalendar";
+import { GuestSelector } from "@/components/GuestSelector";
 
 function createGuestsFormSchema(maxGuests: number) {
   return z.object({
-    guests: z.coerce
-      .number()
-      .int()
-      .min(1, "1명 이상이어야 합니다")
-      .max(maxGuests, `최대 ${maxGuests}명까지 가능합니다`),
+    guests: z.coerce.number().int().min(1, "1명 이상이어야 합니다").max(maxGuests, `최대 ${maxGuests}명까지 가능합니다`),
   });
 }
 
@@ -65,15 +63,8 @@ export default function BookingScreen() {
     }
   };
 
-  const markedDates =
-    checkIn && checkOut
-      ? {
-          [checkIn]: { startingDay: true, color: "#0ea5e9", textColor: "white" },
-          [checkOut]: { endingDay: true, color: "#0ea5e9", textColor: "white" },
-        }
-      : checkIn
-        ? { [checkIn]: { startingDay: true, endingDay: true, color: "#0ea5e9", textColor: "white" } }
-        : {};
+  const nights = checkIn && checkOut ? (new Date(checkOut).getTime() - new Date(checkIn).getTime()) / (1000 * 60 * 60 * 24) : 0;
+  const totalPrice = nights * Number(price);
 
   const notify = (title: string, message: string) => {
     if (Platform.OS === "web") {
@@ -107,42 +98,27 @@ export default function BookingScreen() {
     <View className="flex-1">
       <AppHeader variant="title" title="예약하기" showBack />
       <ScrollView className="flex-1 bg-white px-4 py-4" contentContainerStyle={{ paddingBottom: 24 }}>
-      <Text className="mb-4 text-lg font-bold">
-        {roomName} · {price}원/박 · 최대 {maxGuests}명
-      </Text>
+        <Text className="mb-4 text-lg font-bold">
+          {roomName} · {price}원/박 · 최대 {maxGuests}명
+        </Text>
 
-      <Text className="mb-2">
-        체크인: {checkIn ?? "선택 안 함"} / 체크아웃: {checkOut ?? "선택 안 함"}
-      </Text>
+        <Text className="mb-2">
+          체크인: {checkIn ?? "선택 안 함"} / 체크아웃: {checkOut ?? "선택 안 함"}
+        </Text>
 
-      <Calendar
-        minDate={new Date().toISOString().split("T")[0]}
-        markingType="period"
-        markedDates={markedDates}
-        onDayPress={onDayPress}
-      />
-
-      <Text className="mb-1 mt-4">인원</Text>
-      <Controller
-        control={control}
-        name="guests"
-        render={({ field: { onChange, value } }) => (
-          <TextInput
-            className="mb-1 rounded-lg border border-gray-300 px-3 py-2"
-            keyboardType="number-pad"
-            value={String(value)}
-            onChangeText={(text) => onChange(Number(text) || 0)}
-          />
+        {checkIn && checkOut && (
+          <Text className="mb-2 font-bold">
+            {Number(price).toLocaleString()}원 x {nights}박 = {totalPrice.toLocaleString()}원
+          </Text>
         )}
-      />
-      {errors.guests && <Text className="mb-2 text-red-500">{errors.guests.message}</Text>}
 
-      <GradientButton
-        label={isSubmitting ? "예약 중..." : "예약하기"}
-        disabled={isSubmitting}
-        onPress={handleSubmit(onSubmit)}
-        className="mt-6"
-      />
+        <DateRangeCalendar checkIn={checkIn} checkOut={checkOut} onDayPress={onDayPress} />
+
+        <Text className="mb-1 mt-4">인원</Text>
+        <Controller control={control} name="guests" render={({ field: { onChange, value } }) => <GuestSelector max={Number(maxGuests)} value={value} onChange={onChange} />} />
+        {errors.guests && <Text className="mb-2 text-red-500">{errors.guests.message}</Text>}
+
+        <GradientButton label={isSubmitting ? "예약 중..." : "예약하기"} disabled={isSubmitting} onPress={handleSubmit(onSubmit)} className="mt-6" />
       </ScrollView>
     </View>
   );
