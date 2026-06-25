@@ -1,0 +1,7 @@
+{
+  "cleanUrls": true,
+  "rewrites": [
+    { "source": "/accommodation/:id", "destination": "/accommodation/%5Bid%5D.html" },
+    { "source": "/booking/:roomId", "destination": "/booking/%5BroomId%5D.html" }
+  ]
+}
