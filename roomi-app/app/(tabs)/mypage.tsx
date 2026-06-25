@@ -47,6 +47,20 @@ export default function MyPageScreen() {
         <Text className="mb-8 text-gray-500">{user?.email}</Text>
 
         <Pressable
+          onPress={() => router.push("/my-bookings")}
+          className="mb-3 min-h-11 items-center justify-center rounded-lg border border-sky-500"
+        >
+          <Text className="text-base font-semibold text-sky-500">내 예약</Text>
+        </Pressable>
+
+        <Pressable
+          onPress={() => router.push("/wishlist")}
+          className="mb-8 min-h-11 items-center justify-center rounded-lg border border-sky-500"
+        >
+          <Text className="text-base font-semibold text-sky-500">위시리스트</Text>
+        </Pressable>
+
+        <Pressable
           onPress={onLogout}
           className="min-h-11 items-center justify-center rounded-lg border border-red-500"
         >
