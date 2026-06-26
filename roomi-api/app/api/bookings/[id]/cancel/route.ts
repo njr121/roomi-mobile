@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
 import { apiSuccess, apiError } from "@/lib/api-response";
 import { ErrorCode } from "@/lib/errors";
+import { BookingStatus } from "@prisma/client";
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const authResult = await requireAuth();
@@ -16,12 +17,12 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   if (!booking) {
     return apiError(ErrorCode.NOT_FOUND, "예약을 찾을 수 없습니다", 404);
   }
-  if (booking.status === "CANCELLED") {
+  if (booking.status === BookingStatus.CANCELLED) {
     return apiError(ErrorCode.VALIDATION_ERROR, "이미 취소된 예약입니다", 400);
   }
   const cancelled = await prisma.booking.update({
     where: { id },
-    data: { status: "CANCELLED" },
+    data: { status: BookingStatus.CANCELLED },
   });
   return apiSuccess(cancelled);
 }
