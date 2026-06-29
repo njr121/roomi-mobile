@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { apiSuccess, apiError } from "@/lib/api-response";
 import { ErrorCode } from "@/lib/errors";
+import { BookingStatus } from "@prisma/client";
 
 const QuerySchema = z
   .object({
@@ -18,10 +19,7 @@ const QuerySchema = z
   .refine((data) => Boolean(data.checkIn) === Boolean(data.checkOut), {
     message: "checkIn과 checkOut은 함께 보내야 합니다",
   })
-  .refine(
-    (data) => !data.checkIn || !data.checkOut || data.checkIn < data.checkOut,
-    { message: "checkIn은 checkOut보다 이전이어야 합니다" }
-  );
+  .refine((data) => !data.checkIn || !data.checkOut || data.checkIn < data.checkOut, { message: "checkIn은 checkOut보다 이전이어야 합니다" });
 
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
@@ -50,7 +48,7 @@ export async function GET(request: NextRequest) {
       ? {
           bookings: {
             none: {
-              status: { not: "cancelled" },
+              status: { not: BookingStatus.CANCELLED },
               checkIn: { lt: checkOut },
               checkOut: { gt: checkIn },
             },
