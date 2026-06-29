@@ -68,7 +68,7 @@ model Booking {
   checkOut    DateTime
   guests      Int
   totalPrice  Int
-  status      String @default("confirmed")
+  status      BookingStatus @default(CONFIRMED)
   createdAt   DateTime @default(now())
   @@index([userId])
   @@index([roomId])
@@ -86,4 +86,7 @@ model Wishlist {
   @@index([userId])
 }
 
-
+enum BookingStatus {
+  CONFIRMED
+  CANCELLED
+}
