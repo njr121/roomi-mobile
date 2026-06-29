@@ -107,9 +107,12 @@ export default function BookingScreen() {
         </Text>
 
         {checkIn && checkOut && (
-          <Text className="mb-2 font-bold">
-            {Number(price).toLocaleString()}원 x {nights}박 = {totalPrice.toLocaleString()}원
-          </Text>
+          <View className="bg-sky-50 rounded-xl p-4 mb-4">
+            <Text className="text-sm font-bold">
+              {Number(price).toLocaleString()}원 x {nights}박 =
+            </Text>
+            <Text className="text-xl font-bold text-sky-600 mt-1">{totalPrice.toLocaleString()}원</Text>
+          </View>
         )}
 
         <DateRangeCalendar checkIn={checkIn} checkOut={checkOut} onDayPress={onDayPress} />
